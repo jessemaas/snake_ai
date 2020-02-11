@@ -5,6 +5,7 @@ import game
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
+from tensorflow.keras.models import load_model
 import numpy as np
 #from keras.backend import tf
 from tensorflow.keras.backend import set_session
@@ -57,23 +58,26 @@ class ConvnetAi(ai.BaseAi):
         self.model.save('convnet-ai-' +  str(datetime.datetime.now()) + '.h5')
 
 class CenteredAI(ai.BaseAi):
-    def __init__(self):
-        model = models.Sequential()
-        model.add(layers.Conv2D(8, (3, 3), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes)))
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.PReLU())
-        model.add(layers.Conv2D(6, (5, 5)))
-        #model.add(layers.Conv2D(4, (3, 3), activation='relu'))
-        model.add(layers.Flatten())
-        model.add(layers.PReLU())
-        model.add(layers.Dense(ai.direction_count))
-        model.add(layers.PReLU())
+    def __init__(self, save_file=None):
+        if save_file == None:
+            model = models.Sequential()
+            model.add(layers.Conv2D(8, (3, 3), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes)))
+            model.add(layers.MaxPooling2D((2, 2)))
+            model.add(layers.PReLU())
+            model.add(layers.Conv2D(6, (5, 5)))
+            #model.add(layers.Conv2D(4, (3, 3), activation='relu'))
+            model.add(layers.Flatten())
+            model.add(layers.PReLU())
+            model.add(layers.Dense(ai.direction_count))
+            model.add(layers.PReLU())
 
-        self.model = model
-        optimizer = keras.optimizers.SGD()
-        model.compile(optimizer=optimizer, loss=ai.custom_loss)
+            self.model = model
+            optimizer = keras.optimizers.SGD()
+            model.compile(optimizer=optimizer, loss=ai.custom_loss)
+        else:
+            self.model = load_model(save_file, custom_objects={'custom_loss': ai.custom_loss})
         
-        self.epsilon = 0.20
+        self.epsilon = 0.05
 
     def worlds_to_np_array(self, worlds):
         result = np.zeros((len(worlds), game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes), dtype=np.float)
