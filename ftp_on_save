@@ -1,0 +1,32 @@
+#!/bin/bash
+
+target_dir="~/Documents/snake-ai/"
+
+read -sp "Password: " password
+
+while [ 1 -eq 1 ]
+do 
+file_watch="$( inotifywait -e modify -e delete -r . )"	
+type="$(echo $file_watch | awk '{print $2}')"	
+file_name="$(echo $file_watch | awk '{print $3}')"
+if [ "$type" = "MODIFY" ]
+then
+ftp -p -n $PAPA <<END_FTP
+quote USER jcmaas
+quote PASS $password
+cd $target_dir
+put $file_name
+quit
+END_FTP
+else
+ftp -p -n $PAPA <<END_FTP
+quote USER jcmaas
+quote PASS $password
+cd $target_dir
+delete $file_name
+quit
+END_FTP
+fi
+done
+
+exit 0	
