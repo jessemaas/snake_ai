@@ -7,6 +7,9 @@ import convnet_ai
 from matplotlib import pyplot
 import numpy as np
 
+import tensorflow as tf
+from tensorflow.keras import backend as K
+
 import math
 import random
 
@@ -14,10 +17,26 @@ parallel_sessions = 128
 food_reward = 1
 
 train_settings = [
-    "teacher",
-#    "reinforcement",
+#    "teacher",
+    "reinforcement",
 #    "distance_food",
 ]
+
+if False:
+    print()
+    print('using CPU!')
+    print()
+
+    config = tf.ConfigProto(
+        allow_soft_placement=True,
+        intra_op_parallelism_threads=16,
+        inter_op_parallelism_threads=16, 
+
+        device_count = {'GPU' : 0, 'CPU': 1}
+    )
+
+    session = tf.Session(config=config)
+    K.set_session(session)
 
 class Trainer:
     def __init__(self, ai=lstm_ai.LSTMAi(), parallel_sessions=parallel_sessions):
@@ -137,8 +156,9 @@ class Trainer:
 
 
 
-ai = lstm_ai.SimpleAi()
+# ai = lstm_ai.SimpleAi()
 # ai = convnet_ai.CenteredAI()
+ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 19:46:27.989205.h5')
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
 
@@ -146,12 +166,12 @@ averages = []
 losses = []
 smoothed_averages = []
 
-graphic_output_interval = 100
+graphic_output_interval = 1
 pyplot.figure(0)
 
-epochs = 10_000
-simultaneous_worlds = 32
-simulated_games_count = 0
+epochs = 1_000
+simultaneous_worlds = 128
+simulated_games_count = 1
 
 ai.epsilon = 0.1
 verbosity = 1
@@ -166,8 +186,6 @@ verbosity = 1
 import render
 
 for epoch_id in range(1, epochs + 1):
-    if False and epochs == 500:
-        train_settings = ["reinforcement"]
 
     # ai.epsilon *= epsilon_decrement_factor
     # print("start epoch")
@@ -212,7 +230,19 @@ for epoch_id in range(1, epochs + 1):
         pyplot.style.use('seaborn')
         pyplot.plot(smoothed_averages, linewidth=0.5)
 
-        pyplot.savefig('graph-' + str(epoch_id).rjust(5, '0'), dpi=300)
+
+        if verbosity == 1:
+            print('100-game average', smoothed_averages[-1])
+
+        if True and smoothed_averages[-1] > 0.7:
+            train_settings = ["reinforcement"]
+            if verbosity >= 1:
+                print() 
+                print("switching to reinforcement")
+                print()
+
+
+        pyplot.savefig('graph_output/graph-' + str(epoch_id).rjust(5, '0'), dpi=300)
     
         for _ in range(simulated_games_count):
             renderer = render.Renderer(ai)
