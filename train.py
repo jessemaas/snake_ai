@@ -154,6 +154,8 @@ simultaneous_worlds = 32
 simulated_games_count = 0
 
 ai.epsilon = 0.1
+verbosity = 1
+
 # epsilon_decrement_factor = 0.99
 
 
@@ -168,19 +170,26 @@ for epoch_id in range(1, epochs + 1):
         train_settings = ["reinforcement"]
 
     # ai.epsilon *= epsilon_decrement_factor
-    print("start epoch")
-    print(epoch_id)
+    # print("start epoch")
+    # print(epoch_id)
     
-    print("creating trainer")
+    if verbosity >= 2:
+        print("creating trainer")
     trainer = Trainer(ai, simultaneous_worlds)
-    print("simulating game")
+    
+    if verbosity >= 2:
+        print("simulating game")
+
     trainer.simulate_entire_game()
 
-    print("get results")
+    if verbosity >= 2:
+        print("get results")
     max_score, total_score = trainer.results()
     
     average = float(total_score) / len(trainer.train_data)
-    print('max:', max_score, 'average', average)
+
+    if verbosity >= 2:
+        print('max:', max_score, 'average', average)
 
     averages.append(average)
 
@@ -188,7 +197,8 @@ for epoch_id in range(1, epochs + 1):
     losses.append(history.history['loss'])
 
     if epoch_id % graphic_output_interval == 0:
-        print('graphic output!')
+        if verbosity >= 1:
+            print('graphic output! Epoch:' + str(epoch_id))
         # ai.print_layer_weights()
         # output graph
         pyplot.style.use('default')
