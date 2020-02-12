@@ -268,7 +268,7 @@ for i in range(last_update, epoch_id):
 pyplot.style.use('seaborn')
 pyplot.plot(smoothed_averages)
 
-pyplot.show()
+# pyplot.show()
 
 # import render
 

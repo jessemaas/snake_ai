@@ -85,7 +85,8 @@ class CenteredAI(ai.BaseAi):
 
     def worlds_to_np_array(self, worlds):
         result = np.zeros((len(worlds), game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes), dtype=np.float)
-        
+        # result[:, :, :, 2] = 1
+
         for world_index, world in enumerate(worlds):
             food_x, food_y = world.food
             head_x, head_y = world.snake[0]
@@ -93,6 +94,9 @@ class CenteredAI(ai.BaseAi):
             x_offset = -head_x + game.world_width - 1
             y_offset = -head_y + game.world_height - 1
 
+            result[world_index, head_x:head_x + game.world_width, head_y:head_y + game.world_height] = [0, 0, 0, 1]
+
+            """
             for x in range(result.shape[1]):
                 for y in range(result.shape[2]):
                     # there is no food and part of the snake here
@@ -102,6 +106,7 @@ class CenteredAI(ai.BaseAi):
                     else:
                         # the tile is inside the world border
                         result[world_index, x, y, 3] = 1
+            """
 
             result[world_index, food_x + x_offset, food_y + y_offset] = np.array([1, 0, 0, 0])
 
