@@ -85,7 +85,7 @@ class CenteredAI(ai.BaseAi):
 
     def worlds_to_np_array(self, worlds):
         result = np.zeros((len(worlds), game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes), dtype=np.float)
-        # result[:, :, :, 2] = 1
+        result[:, :, :, 2] = 1
 
         for world_index, world in enumerate(worlds):
             food_x, food_y = world.food
