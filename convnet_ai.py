@@ -12,9 +12,9 @@ from tensorflow.keras.backend import set_session
 
 import datetime
 
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-set_session(tf.Session(config=config))
+# config = tf.ConfigProto()
+# config.gpu_options.allow_growth = True
+# set_session(tf.Session(config=config))
 
 tile_classes = 4
 
@@ -93,18 +93,21 @@ class CenteredAI(ai.BaseAi):
             x_offset = -head_x + game.world_width - 1
             y_offset = -head_y + game.world_height - 1
 
-            result[world_index, food_x + x_offset, food_y + y_offset, 0] = 1
-
-            for snake_x, snake_y in world.snake:
-                result[world_index, snake_x + x_offset, snake_y + y_offset, 1] = 1
-
             for x in range(result.shape[1]):
                 for y in range(result.shape[2]):
-                    if np.sum(result[world_index, x, y]) == 0:
-                        if x_offset + x < 0 or x_offset + x >= game.world_width or y_offset + y < 0 or y_offset + y >= game.world_height:
-                            result[world_index, x, y, 2] = 1
-                        else:
-                            result[world_index, x, y, 3] = 1
+                    # there is no food and part of the snake here
+                    if x_offset + x < 0 or x_offset + x >= game.world_width or y_offset + y < 0 or y_offset + y >= game.world_height:
+                        # the tile is outside the world border
+                        result[world_index, x, y, 2] = 1
+                    else:
+                        # the tile is inside the world border
+                        result[world_index, x, y, 3] = 1
+
+            result[world_index, food_x + x_offset, food_y + y_offset] = np.array([1, 0, 0, 0])
+
+            for snake_x, snake_y in world.snake:
+                result[world_index, snake_x + x_offset, snake_y + y_offset] = np.array([0, 1, 0, 0])
+
         return result
 
     def save(self):

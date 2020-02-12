@@ -13,7 +13,6 @@ from tensorflow.keras import backend as K
 import math
 import random
 
-parallel_sessions = 128
 food_reward = 1
 
 train_settings = [
@@ -40,7 +39,7 @@ if False:
     K.set_session(session)
 
 class Trainer:
-    def __init__(self, ai=lstm_ai.LSTMAi(), parallel_sessions=parallel_sessions):
+    def __init__(self, ai, parallel_sessions):
         self.ai = ai
         self.train_data = [[] for i in range(parallel_sessions)]
         self.worlds_with_train_data = [(game.World(), self.train_data[i]) for i in range(parallel_sessions)]
@@ -175,7 +174,7 @@ smoothed_averages = []
 graphic_output_interval = 10
 pyplot.figure(0)
 
-epochs = 1_000
+epochs = 20
 simultaneous_worlds = 128
 simulated_games_count = 0
 
