@@ -20,6 +20,7 @@ train_settings = [
 #    "teacher",
     "reinforcement",
 #    "distance_food",
+    "probability_of_food",
 ]
 
 if False:
@@ -86,8 +87,12 @@ class Trainer:
                     reward = food_reward
                 for data in train_data:
                     data.total_food += 1
-            
-            if "reinforcement" in train_settings:
+                    if "probability_of_food" in train_settings and not "teacher" in train_settings:
+                        data.reward = 1
+            if "probability_of_food" in train_settings and not "teacher" in train_settings:
+                train_data.append(ai_module.LearnData(world, move_indices[i], 0))
+            elif "reinforcement" in train_settings:
+                
                 gamma = 0.9
                 reward_factor = 1
 
@@ -158,7 +163,8 @@ class Trainer:
 
 # ai = lstm_ai.SimpleAi()
 # ai = convnet_ai.CenteredAI()
-ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 19:46:27.989205.h5')
+# ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 19:46:27.989205.h5')
+ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 22:32:29.469784.h5')
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
 
@@ -166,12 +172,12 @@ averages = []
 losses = []
 smoothed_averages = []
 
-graphic_output_interval = 1
+graphic_output_interval = 10
 pyplot.figure(0)
 
 epochs = 1_000
 simultaneous_worlds = 128
-simulated_games_count = 1
+simulated_games_count = 0
 
 ai.epsilon = 0.1
 verbosity = 1
@@ -234,8 +240,9 @@ for epoch_id in range(1, epochs + 1):
         if verbosity == 1:
             print('100-game average', smoothed_averages[-1])
 
-        if True and smoothed_averages[-1] > 0.7:
-            train_settings = ["reinforcement"]
+        if False and smoothed_averages[-1] > 0.6:
+            train_settings.remove("teacher")
+            train_settings.append(["reinforcement"])
             if verbosity >= 1:
                 print() 
                 print("switching to reinforcement")

@@ -69,7 +69,11 @@ class CenteredAI(ai.BaseAi):
             model.add(layers.Flatten())
             model.add(layers.PReLU())
             model.add(layers.Dense(ai.direction_count))
-            model.add(layers.PReLU())
+            if True:
+                model.add(layers.Dense(ai.direction_count, activation="sigmoid"))
+            else:
+                model.add(layers.Dense(ai.direction_count))
+                model.add(layers.PReLU())
 
             self.model = model
             optimizer = keras.optimizers.SGD()

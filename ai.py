@@ -83,7 +83,7 @@ class BaseAi:
         for i, data in enumerate(learnData):
             targets[i][data.action_index] = data.reward
 
-        return self.model.fit(inputs, targets, batch_size=128, epochs=5, verbose=0)
+        return self.model.fit(inputs, targets, batch_size=128, epochs=1, verbose=0)
 
     def print_layer_weights(self):
         for layer in self.model.layers:
