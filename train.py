@@ -143,12 +143,12 @@ class Trainer:
 
 
 # ai = lstm_ai.SimpleAi()
-ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-13 19:48:32.244474.h5")
+# ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-13 19:48:32.244474.h5")
 # ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 19:46:27.989205.h5')
 # ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 22:32:29.469784.h5')
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
-# ai = convnet_ai.CenteredAI()
+ai = convnet_ai.CenteredAI()
 
 averages = []
 losses = []
@@ -217,7 +217,7 @@ for epoch_id in range(1, epochs + 1):
 
 
         if verbosity == 1:
-            print('10-game average', smoothed_averages[-1])
+            print('50-game average', smoothed_averages[-1])
 
         if switch_teacher_to_reinforcement and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
             train_settings.remove("teacher")
