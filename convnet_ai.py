@@ -64,16 +64,22 @@ class CenteredAI(ai.BaseAi):
             model.add(layers.Conv2D(8, (3, 3), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes)))
             model.add(layers.MaxPooling2D((2, 2)))
             model.add(layers.PReLU())
-            model.add(layers.Conv2D(6, (5, 5)))
-            #model.add(layers.Conv2D(4, (3, 3), activation='relu'))
+            if True:
+                model.add(layers.Conv2D(6, (3, 3)))
+                model.add(layers.PReLU())
+                model.add(layers.Conv2D(4, (3, 3)))
+            else:
+                model.add(layers.Conv2D(6, (5, 5)))
             model.add(layers.Flatten())
             model.add(layers.PReLU())
             model.add(layers.Dense(ai.direction_count))
+            model.add(layers.PReLU())
             if True:
                 model.add(layers.Dense(ai.direction_count, activation="sigmoid"))
             else:
                 model.add(layers.Dense(ai.direction_count))
                 model.add(layers.PReLU())
+            
 
             self.model = model
             optimizer = keras.optimizers.SGD()
@@ -116,5 +122,5 @@ class CenteredAI(ai.BaseAi):
         return result
 
     def save(self):
-        self.model.save('convnet-ai-' +  str(datetime.datetime.now()) + '.h5')
+        self.model.save('models_output/centered-ai-' +  str(datetime.datetime.now()) + '.h5')
         

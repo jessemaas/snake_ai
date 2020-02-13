@@ -161,20 +161,21 @@ class Trainer:
 
 
 # ai = lstm_ai.SimpleAi()
-# ai = convnet_ai.CenteredAI()
+ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-13 19:48:32.244474.h5")
 # ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 19:46:27.989205.h5')
-ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 22:32:29.469784.h5')
+# ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 22:32:29.469784.h5')
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
+# ai = convnet_ai.CenteredAI()
 
 averages = []
 losses = []
 smoothed_averages = []
 
-graphic_output_interval = 10
+graphic_output_interval = 50
 pyplot.figure(0)
 
-epochs = 20
+epochs = 5000
 simultaneous_worlds = 128
 simulated_games_count = 0
 
@@ -229,7 +230,7 @@ for epoch_id in range(1, epochs + 1):
         pyplot.plot(averages, linewidth=0.5)
 
         for i in range(epoch_id - graphic_output_interval, epoch_id):
-            start_index = max(0, i - 10)
+            start_index = max(0, i - 50)
             smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
 
         pyplot.style.use('seaborn')
@@ -237,9 +238,9 @@ for epoch_id in range(1, epochs + 1):
 
 
         if verbosity == 1:
-            print('100-game average', smoothed_averages[-1])
+            print('10-game average', smoothed_averages[-1])
 
-        if False and smoothed_averages[-1] > 0.6:
+        if True and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
             train_settings.remove("teacher")
             train_settings.append(["reinforcement"])
             if verbosity >= 1:
@@ -256,22 +257,24 @@ for epoch_id in range(1, epochs + 1):
 
 
 ai.save()
-    
-pyplot.figure(0)
-pyplot.plot(averages)
-last_update = epoch_id - (epoch_id % graphic_output_interval)
 
-for i in range(last_update, epoch_id):
-    start_index = max(0, i - 10)
-    smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
+if False:
+    pyplot.figure(0)
+    pyplot.plot(averages)
+    last_update = epoch_id - (epoch_id % graphic_output_interval)
 
-pyplot.style.use('seaborn')
-pyplot.plot(smoothed_averages)
+    for i in range(last_update, epoch_id):
+        start_index = max(0, i - 10)
+        smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
 
-# pyplot.show()
+    pyplot.style.use('seaborn')
+    pyplot.plot(smoothed_averages)
 
-# import render
+    pyplot.show()
 
-# for i in range(10):
-#     renderer = render.Renderer(ai)
-#     renderer.render_loop()
+if False:
+    import render
+
+    for i in range(10):
+        renderer = render.Renderer(ai)
+    renderer.render_loop()
