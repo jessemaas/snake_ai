@@ -161,7 +161,8 @@ epochs = 5000
 simultaneous_worlds = 128
 simulated_games_count = 0
 
-ai.epsilon = 0.1
+switch_teacher_to_reinforcement = True
+ai.epsilon = 0.05
 verbosity = 1
 
 # epsilon_decrement_factor = 0.99
@@ -218,7 +219,7 @@ for epoch_id in range(1, epochs + 1):
         if verbosity == 1:
             print('10-game average', smoothed_averages[-1])
 
-        if True and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
+        if switch_teacher_to_reinforcement and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
             train_settings.remove("teacher")
             train_settings.append(["reinforcement"])
             if verbosity >= 1:
