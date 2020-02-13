@@ -138,30 +138,6 @@ class Trainer:
             total_score += food_amount
 
         return max_score, total_score
-
-    def random_worlds_fix(self, initialization=2, samples=1000, epochs = 10):
-        worlds = []
-        for _ in range(samples):
-            random_world = game.World()
-
-            for _ in range(5):
-                move_index = random.randint(0, 3)
-                random_world.set_direction(game.directions[move_index])
-                random_world.forward()
-
-            worlds.append(random_world)
-
-        input = self.ai.worlds_to_np_array(worlds)
-        output = np.empty((samples, ai_module.direction_count), dtype=np.float)
-        output.fill(initialization * -50)
-        for i in range(samples):
-            random_index = random.randint(0, 3)
-            output[i, random_index] = initialization
-        
-        ai.model.fit(input, output, batch_size=128, epochs=2)
-        print(ai.model.predict(input[:2]))
-        
-        ai.model.fit(input, output, batch_size=128, epochs=epochs)
         
 
 
@@ -189,10 +165,6 @@ ai.epsilon = 0.1
 verbosity = 1
 
 # epsilon_decrement_factor = 0.99
-
-
-# trainer = Trainer(ai, parallel_sessions=0)
-# trainer.random_worlds_fix(11, 100000, 3)
 
 
 import render
