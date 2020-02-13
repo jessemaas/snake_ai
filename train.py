@@ -16,10 +16,10 @@ import random
 food_reward = 1
 
 train_settings = [
-#    "teacher",
-    "reinforcement",
-#    "distance_food",
-    "probability_of_food",
+#    "teacher",             # whether to learn from a teacher/supervised
+    "reinforcement",        # whether to use reinforcement learning
+#    "distance_food",       # whether to use the distance_food goal
+    "probability_of_food",  # whether to use the probability_of_food goal
 ]
 
 if False:
@@ -45,12 +45,18 @@ class Trainer:
         self.worlds_with_train_data = [(game.World(), self.train_data[i]) for i in range(parallel_sessions)]
 
     def step(self):
-        teacher_ai = ai_module.HardcodedAi()
+        """
+        performs one simulation step and does necessary work for training
+        """
 
+        if "teacher" in train_settings:
+            teacher_ai = ai_module.HardcodedAi()
+            teacher_move_indices = teacher_ai.predict_best_moves(
+                [world for world, train_data in self.worlds_with_train_data]
+            )
+
+        # predict moves
         move_indices = self.ai.predict_best_moves(
-            [world for world, train_data in self.worlds_with_train_data]
-        )
-        teacher_move_indices = teacher_ai.predict_best_moves(
             [world for world, train_data in self.worlds_with_train_data]
         )
 

@@ -58,40 +58,60 @@ class ConvnetAi(ai.BaseAi):
         self.model.save('convnet-ai-' +  str(datetime.datetime.now()) + '.h5')
 
 class CenteredAI(ai.BaseAi):
+    """
+    This AI is a convolutional neural network. It has as input a map of the world, centered around the head of the snake.
+    """
     def __init__(self, save_file=None):
         if save_file == None:
+            # construct model
             model = models.Sequential()
             model.add(layers.Conv2D(8, (3, 3), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes)))
             model.add(layers.MaxPooling2D((2, 2)))
             model.add(layers.PReLU())
+
             if True:
+                # a more complex model
                 model.add(layers.Conv2D(6, (3, 3)))
                 model.add(layers.PReLU())
                 model.add(layers.Conv2D(4, (3, 3)))
             else:
+                # a simpler model
                 model.add(layers.Conv2D(6, (5, 5)))
+
             model.add(layers.Flatten())
             model.add(layers.PReLU())
             model.add(layers.Dense(ai.direction_count))
             model.add(layers.PReLU())
+
             if True:
+                # used for "teacher" goal and "food_probabilty" goal
                 model.add(layers.Dense(ai.direction_count, activation="sigmoid"))
             else:
-                model.add(layers.Dense(ai.direction_count))
-                model.add(layers.PReLU())
+                # used for predicting the reward
+                model.add(layers.Dense(ai.direction_count, activation='relu'))
             
 
             self.model = model
             optimizer = keras.optimizers.SGD()
             model.compile(optimizer=optimizer, loss=ai.custom_loss)
         else:
+            # read model from file
             self.model = load_model(save_file, custom_objects={'custom_loss': ai.custom_loss})
         
         self.epsilon = 0.05
 
     def worlds_to_np_array(self, worlds):
+        """
+        Converts the worlds to into 2D maps, centered around the head of the snake.
+        """
+        food_encoding = np.array([1, 0, 0, 0])
+        snake_encoding = np.array([0, 1, 0, 0])
+        empty_encoding = np.array([0, 0, 0, 1])
+
+        # initialize all tiles to "outside the borders"
         result = np.zeros((len(worlds), game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes), dtype=np.float)
         result[:, :, :, 2] = 1
+
 
         for world_index, world in enumerate(worlds):
             food_x, food_y = world.food
@@ -100,24 +120,15 @@ class CenteredAI(ai.BaseAi):
             x_offset = -head_x + game.world_width - 1
             y_offset = -head_y + game.world_height - 1
 
-            result[world_index, head_x:head_x + game.world_width, head_y:head_y + game.world_height] = [0, 0, 0, 1]
+            # set the right tiles to "inside the borders, but empty"
+            result[world_index, head_x:head_x + game.world_width, head_y:head_y + game.world_height] = empty_encoding
 
-            """
-            for x in range(result.shape[1]):
-                for y in range(result.shape[2]):
-                    # there is no food and part of the snake here
-                    if x_offset + x < 0 or x_offset + x >= game.world_width or y_offset + y < 0 or y_offset + y >= game.world_height:
-                        # the tile is outside the world border
-                        result[world_index, x, y, 2] = 1
-                    else:
-                        # the tile is inside the world border
-                        result[world_index, x, y, 3] = 1
-            """
+            # set the right tile to "food"
+            result[world_index, food_x + x_offset, food_y + y_offset] = food_encoding
 
-            result[world_index, food_x + x_offset, food_y + y_offset] = np.array([1, 0, 0, 0])
-
+            # set right tiles to "snake"
             for snake_x, snake_y in world.snake:
-                result[world_index, snake_x + x_offset, snake_y + y_offset] = np.array([0, 1, 0, 0])
+                result[world_index, snake_x + x_offset, snake_y + y_offset] = snake_encoding
 
         return result
 
