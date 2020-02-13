@@ -47,10 +47,10 @@ class Trainer:
     def step(self):
         teacher_ai = ai_module.HardcodedAi()
 
-        move_indices = self.ai.predict_best_moves(
+        move_indices, worlds_as_np_array = self.ai.predict_best_moves(
             [world for world, train_data in self.worlds_with_train_data]
         )
-        teacher_move_indices = teacher_ai.predict_best_moves(
+        teacher_move_indices, _ = teacher_ai.predict_best_moves(
             [world for world, train_data in self.worlds_with_train_data]
         )
 
@@ -101,6 +101,8 @@ class Trainer:
                         reward_factor *= gamma
                 
                 train_data.append(ai_module.LearnData(world, move_indices[i], reward))
+        
+        return worlds_as_np_array
 
         # remove the larger indices first
         removed_world_indices.sort(reverse=True)
@@ -268,7 +270,7 @@ for i in range(last_update, epoch_id):
 pyplot.style.use('seaborn')
 pyplot.plot(smoothed_averages)
 
-# pyplot.show()
+pyplot.show()
 
 # import render
 

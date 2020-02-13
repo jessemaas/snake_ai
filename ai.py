@@ -9,7 +9,7 @@ import game
 sign = lambda x: x and (1, -1)[x < 0]
 
 class LearnData:
-    def __init__(self, world, action_index, reward):
+    def __init__(self, world, action_index, reward, as_np_array):
         self.width = world.width
         self.height = world.height
         self.snake = world.snake[:]
@@ -17,6 +17,7 @@ class LearnData:
         self.action_index = action_index
         self.reward = reward
         self.total_food = 0
+        self.worlds_as_np_array
 
 tile_class_count = 3
 direction_count = 4
@@ -70,13 +71,13 @@ class BaseAi:
                 # print('rand after:', rand)
 
 
-            return [direction(prediction) for prediction in predictions]
+            return [direction(prediction), inputs for prediction in predictions]
 
     def worlds_to_np_array(self, worlds):
         raise NotImplementedError
 
     def train(self, learnData):
-        inputs = self.worlds_to_np_array(learnData)
+        inputs = learnData.worlds_as_np_array# self.worlds_to_np_array(learnData)
 
         targets = np.empty((len(learnData), direction_count))
         targets.fill(-np.Infinity)

@@ -40,7 +40,7 @@ class Renderer:
 
 
             if time.time() - last_update > 0.5:
-                predictions = self.ai.predict_best_moves([self.world])
+                predictions, _ = self.ai.predict_best_moves([self.world])
                 print(predictions)
 
                 self.world.set_direction(

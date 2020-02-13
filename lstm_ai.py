@@ -43,7 +43,7 @@ class LSTMAi(ai.BaseAi):
         return result
 
     def train(self, learnData):
-        inputs = self.worlds_to_np_array(learnData)
+        inputs = learnData.worlds_as_np_array# self.worlds_to_np_array(learnData)
 
         # array = np.zeros((len(inputs), 3, 4), dtype=np.int)
         # for x in range(len(inputs)):
