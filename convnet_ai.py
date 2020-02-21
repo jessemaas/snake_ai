@@ -19,38 +19,50 @@ import datetime
 tile_classes = 4
 
 class ConvnetAi(ai.BaseAi):
-    def __init__(self):
-        model = models.Sequential()
-        model.add(layers.Conv2D(8, (3, 3), activation='relu', input_shape=(game.world_width, game.world_height, tile_classes)))
-        model.add(layers.Conv2D(6, (5, 5), activation='relu'))
-        #model.add(layers.Conv2D(4, (3, 3), activation='relu'))
-        model.add(layers.Flatten())
-        model.add(layers.Dense(ai.direction_count, activation='relu'))
+    def __init__(self, save_file=None):
+        self.outside_world_margin = 1
+        if save_file == None:
+            double_margin = self.outside_world_margin * 2
 
-        self.model = model
-        optimizer = keras.optimizers.SGD()
-        model.compile(optimizer=optimizer, loss=ai.custom_loss)
+            model = models.Sequential()
+            model.add(layers.Conv2D(8, (3, 3), activation='relu', input_shape=(game.world_width + double_margin, game.world_height + double_margin, 5)))
+            model.add(layers.Conv2D(6, (5, 5), activation='relu'))
+            #model.add(layers.Conv2D(4, (3, 3), activation='relu'))
+            model.add(layers.Flatten())
+            model.add(layers.Dense(ai.direction_count, activation='relu'))
+
+            self.model = model
+            optimizer = keras.optimizers.SGD()
+            model.compile(optimizer=optimizer, loss=ai.custom_loss)
+        else:
+            # read model from file
+            self.model = load_model(save_file, custom_objects={'custom_loss': ai.custom_loss})
         
         self.epsilon = 0.10
 
     def worlds_to_np_array(self, worlds):
-        result = np.zeros((len(worlds), game.world_width, game.world_height, tile_classes), dtype=np.float)
+        double_margin = self.outside_world_margin * 2
+        result = np.zeros((len(worlds), game.world_width + double_margin, game.world_height + double_margin, 5), dtype=np.float)
         
         for world_index, world in enumerate(worlds):
+            food =          np.array([1, 0, 0, 0, 0])
+            snake_tail =    np.array([0, 1, 0, 0, 0])
+            snake_head =    np.array([0, 0, 1, 0, 0])
+            empty =         np.array([0, 0, 0, 1, 0])
+            outside_world = np.array([0, 0, 0, 0, 1])
+
+            result[world_index, :, :] = outside_world
+            result[world_index, self.outside_world_margin:-self.outside_world_margin, self.outside_world_margin:-self.outside_world_margin] = empty
+
             food_x, food_y = world.food
 
-            result[world_index, food_x, food_y, 1] = 1
+            result[world_index, food_x, food_y] = food
 
             for snake_x, snake_y in world.snake:
-                result[world_index, snake_x, snake_y, 2] = 1
+                result[world_index, snake_x, snake_y] = snake_tail
 
             head_x, head_y = world.snake[0]
-            result[world_index, head_x, head_y, 3] = 1
-
-            for x in range(game.world_width):
-                for y in range(game.world_height):
-                    if np.sum(result[world_index, x, y]) == 0:
-                        result[world_index, x, y, 0] = 1
+            result[world_index, head_x, head_y] = snake_head
 
         return result
 

@@ -90,27 +90,30 @@ class BaseAi:
             print(layer.get_weights()) 
 
 class HardcodedAi(BaseAi):
-    def __init__(self):
-        pass
+    def __init__(self, epsilon = 0.1):
+        self.epsilon = epsilon
 
     def predict_best_moves(self, worlds):
         move_directions = []
         
         for world in worlds:
-            distance_x = world.food[0] - world.snake[0][0]
-            distance_y = world.food[1] - world.snake[0][1]
-            abs_x = abs(distance_x)
-            abs_y = abs(distance_y)
-
-            if abs_x == abs_y:
-                if distance_x == 0:
-                    move_directions.append((1, 0))
-                else:
-                    move_directions.append((sign(distance_x), 0))
-            elif(abs_x > abs_y):
-                move_directions.append((sign(distance_x), 0))
+            if random.random() < self.epsilon:
+                move_directions.append(game.random_direction())
             else:
-                move_directions.append((0, sign(distance_y)))
+                distance_x = world.food[0] - world.snake[0][0]
+                distance_y = world.food[1] - world.snake[0][1]
+                abs_x = abs(distance_x)
+                abs_y = abs(distance_y)
+
+                if abs_x == abs_y:
+                    if distance_x == 0:
+                        move_directions.append((1, 0))
+                    else:
+                        move_directions.append((sign(distance_x), 0))
+                elif(abs_x > abs_y):
+                    move_directions.append((sign(distance_x), 0))
+                else:
+                    move_directions.append((0, sign(distance_y)))
 
         return list(map(lambda pos: game.directions.index(pos), move_directions))
 
@@ -125,3 +128,30 @@ class HardcodedAi(BaseAi):
 class EmptyHistory:
     def __init__(self):
         self.history = {"loss": 0}
+
+class AStarAI(BaseAi):
+    def __init__(self, epsilon = 0.1):
+        self.epsilon = epsilon
+
+    def predict_best_moves(self, worlds):
+        move_directions = []
+        
+        for world in worlds:
+            if random.random() < self.epsilon:
+                move_directions.append(game.random_direction())
+            else:
+                raise NotImplementedError()
+
+        return list(map(lambda pos: game.directions.index(pos), move_directions))
+
+    def heuristic(self, food_location, agent_location):
+        distance_x = food_location[0] - agent_location[0][0]
+        distance_y = food_location[1] - agent_location[0][1]
+        return abs(distance_x) + abs(distance_y)
+
+
+    def train(self, learnData):
+        return EmptyHistory()
+
+    def save(self):
+        pass

@@ -3,6 +3,7 @@ import lstm_ai
 import ai as ai_module
 import last_n_bodyparts_ai
 import convnet_ai
+import render
 
 from matplotlib import pyplot
 import numpy as np
@@ -23,6 +24,7 @@ train_settings = [
 ]
 
 if False:
+    # use cpu
     print()
     print('using CPU!')
     print()
@@ -140,7 +142,11 @@ class Trainer:
         return max_score, total_score
         
 
-
+def train_supervised(teacher_ai, student_ai, rounds):
+        trainer = Trainer(teacher_ai, rounds)
+        trainer.simulate_entire_game()
+        trainer.ai = student_ai
+        trainer.train()
 
 # ai = lstm_ai.SimpleAi()
 # ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-13 19:48:32.244474.h5")
@@ -148,7 +154,8 @@ class Trainer:
 # ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 22:32:29.469784.h5')
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
-ai = convnet_ai.CenteredAI()
+# ai = convnet_ai.CenteredAI()
+ai = convnet_ai.ConvnetAi("convnet-ai-2020-02-21 14:25:31.650302.h5")
 
 averages = []
 losses = []
@@ -157,18 +164,27 @@ smoothed_averages = []
 graphic_output_interval = 50
 pyplot.figure(0)
 
-epochs = 5000
+epochs = 10000
 simultaneous_worlds = 128
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = True
 ai.epsilon = 0.05
 verbosity = 1
+initialize_supervised = False
 
 # epsilon_decrement_factor = 0.99
 
-
-import render
+if initialize_supervised:
+    if verbosity >= 1:
+        print('training supervised')
+    for id in range(8):
+        if verbosity >= 1:
+            print("supervised round: ", id)
+        train_supervised(ai_module.HardcodedAi(), ai, 1024 * 16)
+    if False:
+        renderer = render.Renderer(ai)
+        renderer.render_loop()
 
 for epoch_id in range(1, epochs + 1):
 
@@ -191,7 +207,7 @@ for epoch_id in range(1, epochs + 1):
     
     average = float(total_score) / len(trainer.train_data)
 
-    if verbosity >= 2:
+    if verbosity >= 2 or (initialize_supervised and verbosity == 1 and epoch_id == 1):
         print('max:', max_score, 'average', average)
 
     averages.append(average)
