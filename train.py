@@ -3,6 +3,8 @@ import lstm_ai
 import ai as ai_module
 import last_n_bodyparts_ai
 import convnet_ai
+import simple_ai
+
 import render
 
 from matplotlib import pyplot
@@ -148,14 +150,16 @@ def train_supervised(teacher_ai, student_ai, rounds):
         trainer.ai = student_ai
         trainer.train()
 
-# ai = lstm_ai.SimpleAi()
+# ai = simple_ai.SimpleAi()
 # ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-13 19:48:32.244474.h5")
 # ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 19:46:27.989205.h5')
 # ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 22:32:29.469784.h5')
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
 # ai = convnet_ai.CenteredAI()
-ai = convnet_ai.ConvnetAi("convnet-ai-2020-02-21 14:25:31.650302.h5")
+ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-21 20:05:32.252522.h5")
+# ai = convnet_ai.ConvnetAi("convnet-ai-2020-02-21 14:25:31.650302.h5")
+# ai = last_n_bodyparts_ai.LastNBodyParts(3)
 
 averages = []
 losses = []
@@ -164,12 +168,13 @@ smoothed_averages = []
 graphic_output_interval = 50
 pyplot.figure(0)
 
-epochs = 10000
-simultaneous_worlds = 128
+epochs = 3000
+simultaneous_worlds = 512
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = True
 ai.epsilon = 0.05
+min_epsilon = 0.01
 verbosity = 1
 initialize_supervised = False
 
@@ -178,10 +183,21 @@ initialize_supervised = False
 if initialize_supervised:
     if verbosity >= 1:
         print('training supervised')
-    for id in range(8):
+    for id in range(32):
         if verbosity >= 1:
             print("supervised round: ", id)
-        train_supervised(ai_module.HardcodedAi(), ai, 1024 * 16)
+        train_supervised(ai_module.HardcodedAi(), ai, 1024 * 8)
+        
+        if True and verbosity >= 1:
+            trainer = Trainer(ai, 1024 * 2)
+            trainer.simulate_entire_game()
+
+            max_score, total_score = trainer.results()
+            
+            average = float(total_score) / len(trainer.train_data)
+
+            print('max:', max_score, 'average', average)
+
     if False:
         renderer = render.Renderer(ai)
         renderer.render_loop()

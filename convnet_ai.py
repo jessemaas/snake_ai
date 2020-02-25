@@ -26,8 +26,9 @@ class ConvnetAi(ai.BaseAi):
 
             model = models.Sequential()
             model.add(layers.Conv2D(8, (3, 3), activation='relu', input_shape=(game.world_width + double_margin, game.world_height + double_margin, 5)))
-            model.add(layers.Conv2D(6, (5, 5), activation='relu'))
-            #model.add(layers.Conv2D(4, (3, 3), activation='relu'))
+            model.add(layers.Conv2D(6, (3, 3), activation='relu'))
+            model.add(layers.Conv2D(6, (3, 3), activation='relu'))
+            model.add(layers.Conv2D(4, (3, 3), activation='relu'))
             model.add(layers.Flatten())
             model.add(layers.Dense(ai.direction_count, activation='relu'))
 
