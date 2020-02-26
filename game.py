@@ -1,14 +1,14 @@
 import random
 import enum
 
-world_width = 9
-world_height = 9
+world_width = 7
+world_height = 7
 initial_snake_length = 4
 directions = [
     (1, 0),
-    (0, 1),
-    (-1, 0),
     (0, -1),
+    (-1, 0),
+    (0, 1),
 ]
 
 class World:

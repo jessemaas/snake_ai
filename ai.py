@@ -131,6 +131,40 @@ class HardcodedAi(BaseAi):
     def save(self, prefix='', suffix=''):
         pass
 
+class RotatedAI(BaseAi):
+    def predict_best_moves(self, worlds):
+        inputs = self.worlds_to_np_array(worlds)
+        predictions = self.model.predict(inputs)
+
+        def direction(world_id):
+            max_index = world_id * 4
+
+            for i in range(1, direction_count):
+                if random.random() < self.epsilon:
+                    return random.randint(0, 3)
+
+                index = world_id * 4 + i
+                if predictions[index] > predictions[max_index]:
+                    max_index = index
+
+            return max_index % 4
+
+
+        return [direction(world_id) for world_id in range(len(worlds))]
+
+    def train(self, learnData, epochs=1):
+        worlds = self.worlds_to_np_array(learnData)
+        inputs = np.zeros((len(learnData), game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes), dtype=np.float)
+        
+        targets = np.empty((len(learnData), 1))
+
+        for i, data in enumerate(learnData):
+            inputs[i] = worlds[i * 4 + data.action_index]
+
+            targets[i][0] = data.reward
+
+        return self.model.fit(inputs, targets, batch_size=512, epochs=epochs, verbose=0)
+
 
 class EmptyHistory:
     def __init__(self):

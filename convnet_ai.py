@@ -154,3 +154,56 @@ class CenteredAI(ai.BaseAi):
     def save(self, prefix='', suffix=''):
         super().save(prefix + 'centered-ai-', suffix)
         
+
+class RotatedCenteredAI(ai.RotatedAI):
+    def __init__(self, save_file=None):
+        self.tile_classes = 5
+
+        if save_file == None:
+            # construct model
+            model = models.Sequential()
+            model.add(layers.Conv2D(8, (5, 5), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes)))
+            model.add(layers.MaxPooling2D((2, 2)))
+            model.add(layers.PReLU())
+
+            if False:
+                # a more complex model
+                model.add(layers.Conv2D(6, (3, 3)))
+                model.add(layers.PReLU())
+                model.add(layers.Conv2D(4, (3, 3)))
+            else:
+                # a simpler model
+                model.add(layers.Conv2D(6, (3, 3)))
+
+            model.add(layers.Flatten())
+            model.add(layers.PReLU())
+            model.add(layers.Dense(ai.direction_count))
+            model.add(layers.PReLU())
+
+            if True:
+                # used for "teacher" goal and "food_probabilty" goal
+                model.add(layers.Dense(1, activation="sigmoid"))
+            else:
+                # used for predicting the reward
+                model.add(layers.Dense(1, activation='relu'))
+            
+
+            self.model = model
+            optimizer = keras.optimizers.Adam()
+            model.compile(optimizer=optimizer, loss='mean_squared_error')
+        else:
+            # read model from file
+            self.model = load_model(save_file, custom_objects={'custom_loss': ai.custom_loss})
+
+    def worlds_to_np_array(self, worlds):
+        unrotated = CenteredAI.worlds_to_np_array(self, worlds)
+        result = np.zeros((len(worlds) * 4, game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes), dtype=np.float)
+        
+        for world_id in range(len(worlds)):
+            for i in range(4):
+                result[world_id * 4 + i] = np.rot90(unrotated[world_id], i, (0, 1))
+
+        return result
+
+    def save(self, prefix='', suffix=''):
+        super().save(prefix + 'centered-rotated-ai-', suffix)

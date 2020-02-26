@@ -65,3 +65,5 @@ class Renderer:
                 self.screen.fill((50, 200, 50), pygame.Rect(x * tile_size + tile_margin, y * tile_size + tile_margin, tile_size - 2 * tile_margin, tile_size - 2 * tile_margin))
 
                 pygame.display.flip()
+                
+        pygame.display.quit()

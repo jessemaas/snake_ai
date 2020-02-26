@@ -119,7 +119,19 @@ class Trainer:
             del self.worlds_with_train_data[index]
     
     def simulate_entire_game(self):
+        # counter = 0
         while(len(self.worlds_with_train_data) > 0):
+            # counter += 1
+
+            # if counter > 200:
+            #     for world, _ in self.worlds_with_train_data:
+            #         renderer = render.Renderer(self.ai)
+            #         renderer.world = world
+            #         renderer.render_loop()
+            #     return
+
+            if verbosity >= 2:
+                print('step; worlds left =', len(self.worlds_with_train_data))
             self.step()
 
     def train(self, epochs=1):
@@ -154,7 +166,9 @@ def train_supervised(teacher_ai, student_ai, rounds):
 # ai = ai_module.HardcodedAi()
 ai = convnet_ai.CenteredAI()
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
-# ai = last_n_bodyparts_ai.LastNBodyParts(3)\
+# ai = last_n_bodyparts_ai.LastNBodyParts(3)
+ai = convnet_ai.RotatedCenteredAI()
+ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
 
 averages = []
 losses = []
@@ -163,7 +177,7 @@ smoothed_averages = []
 graphic_output_interval = 50
 pyplot.figure(0)
 
-epochs = 3000
+epochs = 5000
 simultaneous_worlds = 256
 simulated_games_count = 0
 
@@ -173,12 +187,12 @@ ai.epsilon = 0.05
 min_epsilon = 0.01
 epsilon_decrement_factor = 0.998
 
-learning_rate = 0.01
-min_learning_rate = 0.002
+learning_rate = K.get_value(ai.model.optimizer.lr)
+min_learning_rate = learning_rate * 0.2
 learning_rate_decrement_factor = 0.998
 
 verbosity = 1
-initialize_supervised = True
+initialize_supervised = False
 
 best_average = 0
 best_model = None
@@ -186,10 +200,17 @@ best_model = None
 if initialize_supervised:
     if verbosity >= 1:
         print('training supervised')
-    for id in range(32):
+    for id in range(2):
         if verbosity >= 1:
             print("supervised round: ", id)
+        
+        old_verbosity = verbosity
+        verbosity = min(verbosity, 1)
         train_supervised(ai_module.HardcodedAi(), ai, 1024 * 8)
+        verbosity = old_verbosity
+
+        if verbosity >= 2:
+            print("trained supervised")
         
         if True and verbosity >= 1:
             trainer = Trainer(ai, 1024 * 2)
@@ -233,10 +254,10 @@ for epoch_id in range(1, epochs + 1):
 
     history = trainer.train()
     losses.append(history.history['loss'])
-
-    ai.epsilon = max(ai.epsilon * epsilon_decrement_factor, min_epsilon)
-    learning_rate = max(learning_rate * learning_rate_decrement_factor, min_learning_rate)
-    ai.set_learning_rate(learning_rate)
+    if average > 0.2:
+        ai.epsilon = max(ai.epsilon * epsilon_decrement_factor, min_epsilon)
+        learning_rate = max(learning_rate * learning_rate_decrement_factor, min_learning_rate)
+        ai.set_learning_rate(learning_rate)
 
     if average > best_average:
         best_average = average
