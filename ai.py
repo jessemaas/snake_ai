@@ -94,7 +94,7 @@ class BaseAi:
             print(layer.get_weights()) 
 
     def save(self, prefix='', suffix=''):
-        self.model.save('./models_output/' + prefix +  str(datetime.datetime.now()) + suffix + '.h5')
+        self.model.save('./models_output/' + prefix +  str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M")) + suffix + '.h5')
 
 class HardcodedAi(BaseAi):
     def __init__(self, epsilon = 0.1):

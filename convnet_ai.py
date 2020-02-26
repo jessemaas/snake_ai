@@ -75,10 +75,12 @@ class CenteredAI(ai.BaseAi):
     This AI is a convolutional neural network. It has as input a map of the world, centered around the head of the snake.
     """
     def __init__(self, save_file=None):
+        self.tile_classes = 5
+
         if save_file == None:
             # construct model
             model = models.Sequential()
-            model.add(layers.Conv2D(8, (3, 3), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes)))
+            model.add(layers.Conv2D(8, (3, 3), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes)))
             model.add(layers.MaxPooling2D((2, 2)))
             model.add(layers.PReLU())
 
@@ -105,7 +107,7 @@ class CenteredAI(ai.BaseAi):
             
 
             self.model = model
-            optimizer = keras.optimizers.SGD()
+            optimizer = keras.optimizers.Adam()
             model.compile(optimizer=optimizer, loss=ai.custom_loss)
         else:
             # read model from file
@@ -117,13 +119,14 @@ class CenteredAI(ai.BaseAi):
         """
         Converts the worlds to into 2D maps, centered around the head of the snake.
         """
-        food_encoding = np.array([1, 0, 0, 0])
-        snake_encoding = np.array([0, 1, 0, 0])
-        empty_encoding = np.array([0, 0, 0, 1])
+        food_encoding = np.array([1, 0, 0, 0, 0])
+        snake_tail_encoding = np.array([0, 1, 0, 0, 0])
+        snake_head_encoding = np.array([0, 0, 1, 0, 0])
+        empty_encoding = np.array([0, 0, 0, 1, 0])
 
         # initialize all tiles to "outside the borders"
-        result = np.zeros((len(worlds), game.world_width * 2 - 1, game.world_height * 2 - 1, tile_classes), dtype=np.float)
-        result[:, :, :, 2] = 1
+        result = np.zeros((len(worlds), game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes), dtype=np.float)
+        result[:, :, :, 4] = 1
 
 
         for world_index, world in enumerate(worlds):
@@ -141,7 +144,9 @@ class CenteredAI(ai.BaseAi):
 
             # set right tiles to "snake"
             for snake_x, snake_y in world.snake:
-                result[world_index, snake_x + x_offset, snake_y + y_offset] = snake_encoding
+                result[world_index, snake_x + x_offset, snake_y + y_offset] = snake_tail_encoding
+            head_x, head_y = world.snake[0]
+            result[world_index, head_x + x_offset, head_y + y_offset] = snake_head_encoding
 
         return result
 

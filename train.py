@@ -151,16 +151,10 @@ def train_supervised(teacher_ai, student_ai, rounds):
         trainer.train(3)
 
 # ai = simple_ai.SimpleAi()
-# ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-13 19:48:32.244474.h5")
-# ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 19:46:27.989205.h5')
-# ai = convnet_ai.CenteredAI('./convnet-ai-2020-02-11 22:32:29.469784.h5')
-# ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
-# ai = convnet_ai.CenteredAI()
-# ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-21 20:05:32.252522.h5")
-# ai = convnet_ai.ConvnetAi("convnet-ai-2020-02-21 14:25:31.650302.h5")
-# ai = last_n_bodyparts_ai.LastNBodyParts(3)
 ai = convnet_ai.CenteredAI()
+# ai = last_n_bodyparts_ai.LastNBodyParts(2)
+# ai = last_n_bodyparts_ai.LastNBodyParts(3)\
 
 averages = []
 losses = []
@@ -173,14 +167,14 @@ epochs = 3000
 simultaneous_worlds = 256
 simulated_games_count = 0
 
-switch_teacher_to_reinforcement = True
+switch_teacher_to_reinforcement = False
 
 ai.epsilon = 0.05
 min_epsilon = 0.01
 epsilon_decrement_factor = 0.998
 
-learning_rate = 0.05
-min_learning_rate = 0.01
+learning_rate = 0.01
+min_learning_rate = 0.002
 learning_rate_decrement_factor = 0.998
 
 verbosity = 1
@@ -284,7 +278,7 @@ for epoch_id in range(1, epochs + 1):
             renderer.render_loop()
 
 
-ai.save('', '-current')
+ai.save('', '-last')
 ai.model = best_model
 ai.save('', '-best')
 

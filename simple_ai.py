@@ -1,3 +1,4 @@
+import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
 from tensorflow.keras.models import load_model
