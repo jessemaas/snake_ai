@@ -42,24 +42,7 @@ class LSTMAi(ai.BaseAi):
         
         return result
 
-    def train(self, learnData):
-        inputs = self.worlds_to_np_array(learnData)
-
-        # array = np.zeros((len(inputs), 3, 4), dtype=np.int)
-        # for x in range(len(inputs)):
-        #     for y in range(3):
-        #         for z in range(4):
-        #             array[x, y, z] = 0 #targets[x][0][y][z]
-        # inputs = array
-
-        targets = np.empty((len(learnData), ai.direction_count))
-        targets.fill(-1)
-        for i, data in enumerate(learnData):
-            targets[i][data.action_index] = data.reward
-
-        return self.model.fit(inputs, targets, batch_size=128)
-
-    def save(self):
-        self.model.save('lstm-ai-' +  str(datetime.datetime.now()) + '.h5')
+    def save(self, prefix='', suffix=''):
+        super().save(prefix + 'lstm-ai-', suffix)
 
     

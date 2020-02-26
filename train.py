@@ -122,12 +122,12 @@ class Trainer:
         while(len(self.worlds_with_train_data) > 0):
             self.step()
 
-    def train(self):
+    def train(self, epochs=1):
         # flatten train data, TODO: write something I understand myself
         flatten = lambda l: [item for sublist in l for item in sublist]
         flat_train_data = flatten(self.train_data)
 
-        return self.ai.train(flat_train_data)
+        return self.ai.train(flat_train_data, epochs=epochs)
 
     def results(self):
         max_score = 0
@@ -148,7 +148,7 @@ def train_supervised(teacher_ai, student_ai, rounds):
         trainer = Trainer(teacher_ai, rounds)
         trainer.simulate_entire_game()
         trainer.ai = student_ai
-        trainer.train()
+        trainer.train(3)
 
 # ai = simple_ai.SimpleAi()
 # ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-13 19:48:32.244474.h5")
@@ -157,9 +157,10 @@ def train_supervised(teacher_ai, student_ai, rounds):
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = ai_module.HardcodedAi()
 # ai = convnet_ai.CenteredAI()
-ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-21 20:05:32.252522.h5")
+# ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-21 20:05:32.252522.h5")
 # ai = convnet_ai.ConvnetAi("convnet-ai-2020-02-21 14:25:31.650302.h5")
 # ai = last_n_bodyparts_ai.LastNBodyParts(3)
+ai = convnet_ai.CenteredAI()
 
 averages = []
 losses = []
@@ -169,16 +170,24 @@ graphic_output_interval = 50
 pyplot.figure(0)
 
 epochs = 3000
-simultaneous_worlds = 512
+simultaneous_worlds = 256
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = True
+
 ai.epsilon = 0.05
 min_epsilon = 0.01
-verbosity = 1
-initialize_supervised = False
+epsilon_decrement_factor = 0.998
 
-# epsilon_decrement_factor = 0.99
+learning_rate = 0.05
+min_learning_rate = 0.01
+learning_rate_decrement_factor = 0.998
+
+verbosity = 1
+initialize_supervised = True
+
+best_average = 0
+best_model = None
 
 if initialize_supervised:
     if verbosity >= 1:
@@ -231,6 +240,14 @@ for epoch_id in range(1, epochs + 1):
     history = trainer.train()
     losses.append(history.history['loss'])
 
+    ai.epsilon = max(ai.epsilon * epsilon_decrement_factor, min_epsilon)
+    learning_rate = max(learning_rate * learning_rate_decrement_factor, min_learning_rate)
+    ai.set_learning_rate(learning_rate)
+
+    if average > best_average:
+        best_average = average
+        best_model = tf.keras.models.clone_model(ai.model)
+
     if epoch_id % graphic_output_interval == 0:
         if verbosity >= 1:
             print('graphic output! Epoch:' + str(epoch_id))
@@ -267,7 +284,9 @@ for epoch_id in range(1, epochs + 1):
             renderer.render_loop()
 
 
-ai.save()
+ai.save('', '-current')
+ai.model = best_model
+ai.save('', '-best')
 
 if False:
     pyplot.figure(0)

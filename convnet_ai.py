@@ -67,8 +67,8 @@ class ConvnetAi(ai.BaseAi):
 
         return result
 
-    def save(self):
-        self.model.save('convnet-ai-' +  str(datetime.datetime.now()) + '.h5')
+    def save(self, prefix='', suffix=''):
+        super().save(prefix + 'convnet-ai-', suffix)
 
 class CenteredAI(ai.BaseAi):
     """
@@ -145,6 +145,7 @@ class CenteredAI(ai.BaseAi):
 
         return result
 
-    def save(self):
-        self.model.save('models_output/centered-ai-' +  str(datetime.datetime.now()) + '.h5')
+
+    def save(self, prefix='', suffix=''):
+        super().save(prefix + 'centered-ai-', suffix)
         

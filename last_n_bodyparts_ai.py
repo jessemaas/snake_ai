@@ -37,6 +37,7 @@ class LastNBodyParts(ai.BaseAi):
 
         return result
 
-    def save(self):
-        self.model.save('last-n-body-parts-ai-' +  str(datetime.datetime.now()) + '.h5')
+
+    def save(self, prefix='', suffix=''):
+        super().save(prefix + 'last-n-body-parts-ai-', suffix)
 

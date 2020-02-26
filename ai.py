@@ -5,6 +5,7 @@ import random
 from tensorflow.keras import backend as K
 import math
 import game
+import datetime
 
 sign = lambda x: x and (1, -1)[x < 0]
 
@@ -75,7 +76,10 @@ class BaseAi:
     def worlds_to_np_array(self, worlds):
         raise NotImplementedError
 
-    def train(self, learnData):
+    def set_learning_rate(self, learning_rate):
+        K.set_value(self.model.optimizer.lr, learning_rate)
+
+    def train(self, learnData, epochs=1):
         inputs = self.worlds_to_np_array(learnData)
 
         targets = np.empty((len(learnData), direction_count))
@@ -83,11 +87,14 @@ class BaseAi:
         for i, data in enumerate(learnData):
             targets[i][data.action_index] = data.reward
 
-        return self.model.fit(inputs, targets, batch_size=128, epochs=1, verbose=0)
+        return self.model.fit(inputs, targets, batch_size=512, epochs=epochs, verbose=0)
 
     def print_layer_weights(self):
         for layer in self.model.layers:
             print(layer.get_weights()) 
+
+    def save(self, prefix='', suffix=''):
+        self.model.save('./models_output/' + prefix +  str(datetime.datetime.now()) + suffix + '.h5')
 
 class HardcodedAi(BaseAi):
     def __init__(self, epsilon = 0.1):
@@ -121,7 +128,7 @@ class HardcodedAi(BaseAi):
     def train(self, learnData):
         return EmptyHistory()
 
-    def save(self):
+    def save(self, prefix='', suffix=''):
         pass
 
 
@@ -153,5 +160,5 @@ class AStarAI(BaseAi):
     def train(self, learnData):
         return EmptyHistory()
 
-    def save(self):
+    def save(self, prefix='', suffix=''):
         pass

@@ -42,8 +42,8 @@ class SimpleAi(ai.BaseAi):
         
         return result
     
-    def save(self):
-        self.model.save('simple-ai-' +  str(datetime.datetime.now()) + '.h5')
+    def save(self, prefix='', suffix=''):
+        super().save(prefix + 'simple-ai-', suffix)
 
 class First2BodyPartsAI(ai.BaseAi):
     def __init__(self, file=None):
