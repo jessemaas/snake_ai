@@ -1,7 +1,8 @@
 import render
 import convnet_ai
 
-ai = convnet_ai.CenteredAI("models_output/centered-ai-2020-02-26 11:27-last.h5")
+ai = convnet_ai.RotatedCenteredAI("models/rotated_centered_conv_decreasing_epsilon_and_lr-last.h5")
+ai.epsilon = 0.01
 for _ in range(3):
     renderer = render.Renderer(ai)
     renderer.render_loop()

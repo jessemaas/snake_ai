@@ -1,6 +1,6 @@
 # output
 graph-*.png
-*.h5
+models_output/
 
 # VSCode
 .vscode

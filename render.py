@@ -41,7 +41,7 @@ class Renderer:
 
             if time.time() - last_update > 0.5:
                 predictions = self.ai.predict_best_moves([self.world])
-                print(predictions)
+                print(game.directions[predictions[0]])
 
                 self.world.set_direction(
                     game.directions[predictions[0]]
@@ -59,7 +59,8 @@ class Renderer:
                     self.screen.fill((255, 255, 255))
 
                 for x, y in self.world.snake:
-                    self.screen.fill((0, 0, 0), pygame.Rect(x * tile_size + tile_margin, y * tile_size + tile_margin, tile_size - 2 * tile_margin, tile_size - 2 * tile_margin))
+                    color = (100, 100, 100) if (x, y) == self.world.snake[0] else (0, 0, 0)
+                    self.screen.fill(color, pygame.Rect(x * tile_size + tile_margin, y * tile_size + tile_margin, tile_size - 2 * tile_margin, tile_size - 2 * tile_margin))
                     
                 x, y = self.world.food
                 self.screen.fill((50, 200, 50), pygame.Rect(x * tile_size + tile_margin, y * tile_size + tile_margin, tile_size - 2 * tile_margin, tile_size - 2 * tile_margin))
