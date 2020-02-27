@@ -195,15 +195,20 @@ class RotatedCenteredAI(ai.RotatedAI):
             # read model from file
             self.model = load_model(save_file, custom_objects={'custom_loss': ai.custom_loss})
 
-    def worlds_to_np_array(self, worlds):
-        unrotated = CenteredAI.worlds_to_np_array(self, worlds)
-        result = np.zeros((len(worlds) * 4, game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes), dtype=np.float)
+    # def worlds_to_np_array(self, worlds):
+    #     unrotated = CenteredAI.worlds_to_np_array(self, worlds)
+    #     result = np.zeros((len(worlds) * 4, game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes), dtype=np.float)
         
-        for world_id in range(len(worlds)):
-            for i in range(4):
-                result[world_id * 4 + i] = np.rot90(unrotated[world_id], i, (0, 1))
+    #     for world_id in range(len(worlds)):
+    #         for i in range(4):
+    #             result[world_id * 4 + i] = np.rot90(unrotated[world_id], i, (0, 1))
 
-        return result
+    #     return result
+
+    worlds_to_np_array = CenteredAI.worlds_to_np_array
+
+    def rotate(self, world_as_np_array, amount):
+        return np.rot90(world_as_np_array, amount, (0, 1))
 
     def save(self, prefix='', suffix=''):
         super().save(prefix + 'centered-rotated-ai-', suffix)

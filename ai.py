@@ -133,7 +133,14 @@ class HardcodedAi(BaseAi):
 
 class RotatedAI(BaseAi):
     def predict_best_moves(self, worlds):
-        inputs = self.worlds_to_np_array(worlds)
+        unrotated_inputs = self.worlds_to_np_array(worlds)
+        shape = unrotated_inputs.shape
+        inputs = np.empty((shape[0] * 4,) + shape[1:])
+
+        for world_id in range(len(worlds)):
+            for i in range(4):
+                inputs[world_id * 4 + i] = self.rotate(unrotated_inputs[world_id], i)
+
         predictions = self.model.predict(inputs)
 
         def direction(world_id):
@@ -152,15 +159,16 @@ class RotatedAI(BaseAi):
 
         return [direction(world_id) for world_id in range(len(worlds))]
 
+    def rotate(self, world_as_np_array, amount):
+        raise NotImplementedError()
+
     def train(self, learnData, epochs=1):
-        worlds = self.worlds_to_np_array(learnData)
-        inputs = np.zeros((len(learnData), game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes), dtype=np.float)
+        inputs = self.worlds_to_np_array(learnData)
         
         targets = np.empty((len(learnData), 1))
 
         for i, data in enumerate(learnData):
-            inputs[i] = worlds[i * 4 + data.action_index]
-
+            inputs[i] = self.rotate(inputs[i], data.action_index)
             targets[i][0] = data.reward
 
         return self.model.fit(inputs, targets, batch_size=512, epochs=epochs, verbose=0)

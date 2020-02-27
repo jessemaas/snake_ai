@@ -164,11 +164,11 @@ def train_supervised(teacher_ai, student_ai, rounds):
 
 # ai = simple_ai.SimpleAi()
 # ai = ai_module.HardcodedAi()
-ai = convnet_ai.CenteredAI()
+# ai = convnet_ai.CenteredAI()
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = last_n_bodyparts_ai.LastNBodyParts(3)
 ai = convnet_ai.RotatedCenteredAI()
-ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
+# ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
 
 averages = []
 losses = []
@@ -177,7 +177,7 @@ smoothed_averages = []
 graphic_output_interval = 50
 pyplot.figure(0)
 
-epochs = 5000
+epochs = 1000
 simultaneous_worlds = 256
 simulated_games_count = 0
 
@@ -192,7 +192,8 @@ min_learning_rate = learning_rate * 0.2
 learning_rate_decrement_factor = 0.998
 
 verbosity = 1
-initialize_supervised = False
+initialize_supervised = True
+supervised_rounds = 10
 
 best_average = 0
 best_model = None
@@ -200,7 +201,7 @@ best_model = None
 if initialize_supervised:
     if verbosity >= 1:
         print('training supervised')
-    for id in range(2):
+    for id in range(supervised_rounds):
         if verbosity >= 1:
             print("supervised round: ", id)
         
