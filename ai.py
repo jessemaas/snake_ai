@@ -135,26 +135,35 @@ class RotatedAI(BaseAi):
     def predict_best_moves(self, worlds):
         unrotated_inputs = self.worlds_to_np_array(worlds)
         shape = unrotated_inputs.shape
-        inputs = np.empty((shape[0] * 4,) + shape[1:])
+        inputs = np.empty((shape[0] * 3,) + shape[1:])
+        action_indices = np.empty(shape[0] * 3, dtype=int)
 
         for world_id in range(len(worlds)):
-            for i in range(4):
-                inputs[world_id * 4 + i] = self.rotate(unrotated_inputs[world_id], i)
+            i = 0
+            for action_index in range(4):
+                previous_direction = worlds[world_id].snake_direction
+
+                if game.directions[action_index] != (-previous_direction[0], -previous_direction[1]):
+                    index = world_id * 3 + i
+
+                    inputs[index] = self.rotate(unrotated_inputs[world_id], action_index)
+                    action_indices[index] = action_index
+                    i += 1
 
         predictions = self.model.predict(inputs)
 
         def direction(world_id):
-            max_index = world_id * 4
+            max_index = world_id * 3
 
-            for i in range(1, direction_count):
+            for i in range(1, 3):
                 if random.random() < self.epsilon:
                     return random.randint(0, 3)
 
-                index = world_id * 4 + i
+                index = world_id * 3 + i
                 if predictions[index] > predictions[max_index]:
                     max_index = index
 
-            return max_index % 4
+            return action_indices[max_index]
 
 
         return [direction(world_id) for world_id in range(len(worlds))]

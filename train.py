@@ -193,7 +193,7 @@ learning_rate_decrement_factor = 0.998
 
 verbosity = 1
 initialize_supervised = True
-supervised_rounds = 10
+supervised_rounds = 5
 
 best_average = 0
 best_model = None
