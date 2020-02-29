@@ -25,7 +25,7 @@ train_settings = [
     "probability_of_food",  # whether to use the probability_of_food goal
 ]
 
-if False:
+if True:
     # use cpu
     print()
     print('using CPU!')
@@ -167,8 +167,9 @@ def train_supervised(teacher_ai, student_ai, rounds):
 # ai = convnet_ai.CenteredAI()
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = last_n_bodyparts_ai.LastNBodyParts(3)
-ai = convnet_ai.RotatedCenteredAI()
+# ai = convnet_ai.RotatedCenteredAI()
 # ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
+ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
 
 averages = []
 losses = []
@@ -177,18 +178,21 @@ smoothed_averages = []
 graphic_output_interval = 50
 pyplot.figure(0)
 
-epochs = 1000
-simultaneous_worlds = 256
+epochs = 100
+simultaneous_worlds = 512
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = False
 
 ai.epsilon = 0.05
 min_epsilon = 0.01
+ai.epsilon = min_epsilon
+
 epsilon_decrement_factor = 0.998
 
 learning_rate = K.get_value(ai.model.optimizer.lr)
 min_learning_rate = learning_rate * 0.2
+learning_rate = min_learning_rate
 learning_rate_decrement_factor = 0.998
 
 verbosity = 1
@@ -233,6 +237,20 @@ for epoch_id in range(1, epochs + 1):
     # print("start epoch")
     # print(epoch_id)
     
+
+    if epoch_id == 3:
+        name = tf.test.gpu_device_name()
+        if name:
+            print('Default GPU Device: {}'.format(name))
+        else:
+            print("not using gpu!")
+        
+        if tf.test.is_gpu_available():
+            print("gpu available")
+        else:
+            print("no gpu available")
+
+
     if verbosity >= 2:
         print("creating trainer")
     trainer = Trainer(ai, simultaneous_worlds)

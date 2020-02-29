@@ -12,9 +12,12 @@ from tensorflow.keras.backend import set_session
 
 import datetime
 
-# config = tf.ConfigProto()
-# config.gpu_options.allow_growth = True
-# set_session(tf.Session(config=config))
+config = tf.compat.v1.ConfigProto()
+
+config.gpu_options.allow_growth = True
+config.gpu_options.force_gpu_compatible = True
+
+set_session(tf.Session(config=config))
 
 tile_classes = 4
 
