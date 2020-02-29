@@ -25,7 +25,7 @@ train_settings = [
     "probability_of_food",  # whether to use the probability_of_food goal
 ]
 
-if True:
+if False:
     # use cpu
     print()
     print('using CPU!')
@@ -202,143 +202,144 @@ supervised_rounds = 5
 best_average = 0
 best_model = None
 
-if initialize_supervised:
-    if verbosity >= 1:
-        print('training supervised')
-    for id in range(supervised_rounds):
+if __name__ == "__main__":
+    if initialize_supervised:
         if verbosity >= 1:
-            print("supervised round: ", id)
-        
-        old_verbosity = verbosity
-        verbosity = min(verbosity, 1)
-        train_supervised(ai_module.HardcodedAi(), ai, 1024 * 8)
-        verbosity = old_verbosity
-
-        if verbosity >= 2:
-            print("trained supervised")
-        
-        if True and verbosity >= 1:
-            trainer = Trainer(ai, 1024 * 2)
-            trainer.simulate_entire_game()
-
-            max_score, total_score = trainer.results()
-            
-            average = float(total_score) / len(trainer.train_data)
-
-            print('max:', max_score, 'average', average)
-
-    if False:
-        renderer = render.Renderer(ai)
-        renderer.render_loop()
-
-for epoch_id in range(1, epochs + 1):
-
-    # ai.epsilon *= epsilon_decrement_factor
-    # print("start epoch")
-    # print(epoch_id)
-    
-
-    if epoch_id == 3:
-        name = tf.test.gpu_device_name()
-        if name:
-            print('Default GPU Device: {}'.format(name))
-        else:
-            print("not using gpu!")
-        
-        if tf.test.is_gpu_available():
-            print("gpu available")
-        else:
-            print("no gpu available")
-
-
-    if verbosity >= 2:
-        print("creating trainer")
-    trainer = Trainer(ai, simultaneous_worlds)
-    
-    if verbosity >= 2:
-        print("simulating game")
-
-    trainer.simulate_entire_game()
-
-    if verbosity >= 2:
-        print("get results")
-    max_score, total_score = trainer.results()
-    
-    average = float(total_score) / len(trainer.train_data)
-
-    if verbosity >= 2 or (initialize_supervised and verbosity == 1 and epoch_id == 1):
-        print('max:', max_score, 'average', average)
-
-    averages.append(average)
-
-    history = trainer.train()
-    losses.append(history.history['loss'])
-    if average > 0.2:
-        ai.epsilon = max(ai.epsilon * epsilon_decrement_factor, min_epsilon)
-        learning_rate = max(learning_rate * learning_rate_decrement_factor, min_learning_rate)
-        ai.set_learning_rate(learning_rate)
-
-    if average > best_average:
-        best_average = average
-        best_model = tf.keras.models.clone_model(ai.model)
-
-    if epoch_id % graphic_output_interval == 0:
-        if verbosity >= 1:
-            print('graphic output! Epoch:' + str(epoch_id))
-        # ai.print_layer_weights()
-        # output graph
-        pyplot.style.use('default')
-        pyplot.clf()
-        pyplot.plot(averages, linewidth=0.5)
-
-        for i in range(epoch_id - graphic_output_interval, epoch_id):
-            start_index = max(0, i - 50)
-            smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
-
-        pyplot.style.use('seaborn')
-        pyplot.plot(smoothed_averages, linewidth=0.5)
-
-
-        if verbosity == 1:
-            print('50-game average', smoothed_averages[-1])
-
-        if switch_teacher_to_reinforcement and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
-            train_settings.remove("teacher")
-            train_settings.append(["reinforcement"])
+            print('training supervised')
+        for id in range(supervised_rounds):
             if verbosity >= 1:
-                print() 
-                print("switching to reinforcement")
-                print()
+                print("supervised round: ", id)
+            
+            old_verbosity = verbosity
+            verbosity = min(verbosity, 1)
+            train_supervised(ai_module.HardcodedAi(), ai, 1024 * 8)
+            verbosity = old_verbosity
 
+            if verbosity >= 2:
+                print("trained supervised")
+            
+            if True and verbosity >= 1:
+                trainer = Trainer(ai, 1024 * 2)
+                trainer.simulate_entire_game()
 
-        pyplot.savefig('graph_output/graph-' + str(epoch_id).rjust(5, '0'), dpi=300)
-    
-        for _ in range(simulated_games_count):
+                max_score, total_score = trainer.results()
+                
+                average = float(total_score) / len(trainer.train_data)
+
+                print('max:', max_score, 'average', average)
+
+        if False:
             renderer = render.Renderer(ai)
             renderer.render_loop()
 
+    for epoch_id in range(1, epochs + 1):
 
-ai.save('', '-last')
-ai.model = best_model
-ai.save('', '-best')
+        # ai.epsilon *= epsilon_decrement_factor
+        # print("start epoch")
+        # print(epoch_id)
+        
 
-if False:
-    pyplot.figure(0)
-    pyplot.plot(averages)
-    last_update = epoch_id - (epoch_id % graphic_output_interval)
+        if epoch_id == 3:
+            name = tf.test.gpu_device_name()
+            if name:
+                print('Default GPU Device: {}'.format(name))
+            else:
+                print("not using gpu!")
+            
+            if tf.test.is_gpu_available():
+                print("gpu available")
+            else:
+                print("no gpu available")
 
-    for i in range(last_update, epoch_id):
-        start_index = max(0, i - 10)
-        smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
 
-    pyplot.style.use('seaborn')
-    pyplot.plot(smoothed_averages)
+        if verbosity >= 2:
+            print("creating trainer")
+        trainer = Trainer(ai, simultaneous_worlds)
+        
+        if verbosity >= 2:
+            print("simulating game")
 
-    pyplot.show()
+        trainer.simulate_entire_game()
 
-if False:
-    import render
+        if verbosity >= 2:
+            print("get results")
+        max_score, total_score = trainer.results()
+        
+        average = float(total_score) / len(trainer.train_data)
 
-    for i in range(10):
-        renderer = render.Renderer(ai)
-    renderer.render_loop()
+        if verbosity >= 2 or (initialize_supervised and verbosity == 1 and epoch_id == 1):
+            print('max:', max_score, 'average', average)
+
+        averages.append(average)
+
+        history = trainer.train()
+        losses.append(history.history['loss'])
+        if average > 0.2:
+            ai.epsilon = max(ai.epsilon * epsilon_decrement_factor, min_epsilon)
+            learning_rate = max(learning_rate * learning_rate_decrement_factor, min_learning_rate)
+            ai.set_learning_rate(learning_rate)
+
+        if average > best_average:
+            best_average = average
+            best_model = tf.keras.models.clone_model(ai.model)
+
+        if epoch_id % graphic_output_interval == 0:
+            if verbosity >= 1:
+                print('graphic output! Epoch:' + str(epoch_id))
+            # ai.print_layer_weights()
+            # output graph
+            pyplot.style.use('default')
+            pyplot.clf()
+            pyplot.plot(averages, linewidth=0.5)
+
+            for i in range(epoch_id - graphic_output_interval, epoch_id):
+                start_index = max(0, i - 50)
+                smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
+
+            pyplot.style.use('seaborn')
+            pyplot.plot(smoothed_averages, linewidth=0.5)
+
+
+            if verbosity == 1:
+                print('50-game average', smoothed_averages[-1])
+
+            if switch_teacher_to_reinforcement and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
+                train_settings.remove("teacher")
+                train_settings.append(["reinforcement"])
+                if verbosity >= 1:
+                    print() 
+                    print("switching to reinforcement")
+                    print()
+
+
+            pyplot.savefig('graph_output/graph-' + str(epoch_id).rjust(5, '0'), dpi=300)
+        
+            for _ in range(simulated_games_count):
+                renderer = render.Renderer(ai)
+                renderer.render_loop()
+
+
+    ai.save('', '-last')
+    ai.model = best_model
+    ai.save('', '-best')
+
+    if False:
+        pyplot.figure(0)
+        pyplot.plot(averages)
+        last_update = epoch_id - (epoch_id % graphic_output_interval)
+
+        for i in range(last_update, epoch_id):
+            start_index = max(0, i - 10)
+            smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
+
+        pyplot.style.use('seaborn')
+        pyplot.plot(smoothed_averages)
+
+        pyplot.show()
+
+    if False:
+        import render
+
+        for i in range(10):
+            renderer = render.Renderer(ai)
+        renderer.render_loop()

@@ -161,6 +161,7 @@ class CenteredAI(ai.BaseAi):
 class RotatedCenteredAI(ai.RotatedAI):
     def __init__(self, save_file=None):
         self.tile_classes = 5
+        self.epsilon = 0.01
 
         if save_file == None:
             # construct model
