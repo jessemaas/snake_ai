@@ -167,22 +167,23 @@ class RotatedCenteredAI(ai.RotatedAI):
             # construct model
             model = models.Sequential()
             model.add(layers.Conv2D(8, (5, 5), input_shape=(game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes)))
-            model.add(layers.MaxPooling2D((2, 2)))
             model.add(layers.PReLU())
 
-            if False:
+            complex_model = True
+
+            if complex_model:
                 # a more complex model
+                model.add(layers.Conv2D(6, (5, 5)))
                 model.add(layers.Conv2D(6, (3, 3)))
-                model.add(layers.PReLU())
-                model.add(layers.Conv2D(4, (3, 3)))
             else:
                 # a simpler model
                 model.add(layers.Conv2D(6, (3, 3)))
 
             model.add(layers.Flatten())
             model.add(layers.PReLU())
-            model.add(layers.Dense(ai.direction_count))
-            model.add(layers.PReLU())
+            if complex_model:
+                model.add(layers.Dense(32))
+                model.add(layers.PReLU())
 
             if True:
                 # used for "teacher" goal and "food_probabilty" goal

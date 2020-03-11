@@ -15,6 +15,8 @@ from tensorflow.keras import backend as K
 
 import math
 import random
+import datetime
+import os
 
 food_reward = 1
 
@@ -167,18 +169,19 @@ def train_supervised(teacher_ai, student_ai, rounds):
 # ai = convnet_ai.CenteredAI()
 # ai = last_n_bodyparts_ai.LastNBodyParts(2)
 # ai = last_n_bodyparts_ai.LastNBodyParts(3)
-# ai = convnet_ai.RotatedCenteredAI()
+ai = convnet_ai.RotatedCenteredAI()
 # ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
-ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
+# ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
 
 averages = []
 losses = []
 smoothed_averages = []
 
-graphic_output_interval = 50
+graphic_output_interval = 10
+smooth_average_count = graphic_output_interval
 pyplot.figure(0)
 
-epochs = 100
+epochs = 500
 simultaneous_worlds = 512
 simulated_games_count = 0
 
@@ -196,13 +199,17 @@ learning_rate = min_learning_rate
 learning_rate_decrement_factor = 0.998
 
 verbosity = 1
-initialize_supervised = True
+initialize_supervised = False
 supervised_rounds = 5
 
 best_average = 0
 best_model = None
 
 if __name__ == "__main__":
+    training_start = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    last_graph_name = None
+    print('training_start =', training_start)
+
     if initialize_supervised:
         if verbosity >= 1:
             print('training supervised')
@@ -293,7 +300,7 @@ if __name__ == "__main__":
             pyplot.plot(averages, linewidth=0.5)
 
             for i in range(epoch_id - graphic_output_interval, epoch_id):
-                start_index = max(0, i - 50)
+                start_index = max(0, i - smooth_average_count)
                 smoothed_averages.append(sum(averages[start_index : i + 1]) / (i + 1 - start_index))
 
             pyplot.style.use('seaborn')
@@ -301,7 +308,7 @@ if __name__ == "__main__":
 
 
             if verbosity == 1:
-                print('50-game average', smoothed_averages[-1])
+                print(str(smooth_average_count) + '-game average:', smoothed_averages[-1])
 
             if switch_teacher_to_reinforcement and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
                 train_settings.remove("teacher")
@@ -311,8 +318,13 @@ if __name__ == "__main__":
                     print("switching to reinforcement")
                     print()
 
+            # new_graph_name = 'graph_output/graph-' + training_start + '-' + str(epoch_id).rjust(5, '0')
+            new_graph_name = 'graph_output/graph-' + training_start
+            pyplot.savefig(new_graph_name, dpi=300)
 
-            pyplot.savefig('graph_output/graph-' + str(epoch_id).rjust(5, '0'), dpi=300)
+            # if last_graph_name != None:
+            #     os.remove(last_graph_name + '.png')
+            # last_graph_name = new_graph_name
         
             for _ in range(simulated_games_count):
                 renderer = render.Renderer(ai)
