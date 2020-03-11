@@ -1,7 +1,7 @@
 import train
 import convnet_ai
 
-ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
+ai = convnet_ai.RotatedCenteredAI("models/large-rotated-centered-best.h5")
 
 for _ in range(10):
     trainer = train.Trainer(ai, 512)

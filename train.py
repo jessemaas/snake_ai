@@ -247,6 +247,7 @@ if __name__ == "__main__":
         
 
         if epoch_id == 3:
+            # performs some tests to make sure the GPU works
             name = tf.test.gpu_device_name()
             if name:
                 print('Default GPU Device: {}'.format(name))
@@ -272,6 +273,7 @@ if __name__ == "__main__":
             print("get results")
         max_score, total_score = trainer.results()
         
+        # `len(trainer.train_data)` is the amount of simulated worlds
         average = float(total_score) / len(trainer.train_data)
 
         if verbosity >= 2 or (initialize_supervised and verbosity == 1 and epoch_id == 1):
