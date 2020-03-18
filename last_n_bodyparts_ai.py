@@ -1,4 +1,5 @@
 import ai
+
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
 import numpy as np
@@ -38,6 +39,6 @@ class LastNBodyParts(ai.BaseAi):
         return result
 
 
-    def save(self, prefix='', suffix=''):
-        super().save(prefix + 'last-n-body-parts-ai-', suffix)
+    def save(self, time, prefix='', suffix=''):
+        super().save(time, prefix + 'last-n-body-parts-ai-', suffix)
 

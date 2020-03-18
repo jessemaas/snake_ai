@@ -1,16 +1,21 @@
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
 import numpy as np
-import random
 from tensorflow.keras import backend as K
-import math
+
 import game
+# import train
+
+import random
+import math
 import datetime
+
+train_settings = None
 
 sign = lambda x: x and (1, -1)[x < 0]
 
 class LearnData:
-    def __init__(self, world, action_index, reward):
+    def __init__(self, world, action_index, reward, died=None):
         self.width = world.width
         self.height = world.height
         self.snake = world.snake[:]
@@ -18,6 +23,7 @@ class LearnData:
         self.action_index = action_index
         self.reward = reward
         self.total_food = 0
+        self.died = died
 
 tile_class_count = 3
 direction_count = 4
@@ -33,6 +39,16 @@ class BaseAi:
     def __init__(self):
         self.epsilon = 0.05
         self.model = None
+        self.policy = self.simple_policy
+
+    def simple_policy(self, prediction):
+        max_index = 0
+
+        for i in range(1, direction_count):
+            if prediction[i] > prediction[max_index]:
+                max_index = i
+
+        return max_index
 
     def predict_best_moves(self, worlds):
         if random.random() < self.epsilon:
@@ -41,37 +57,7 @@ class BaseAi:
             inputs = self.worlds_to_np_array(worlds)
             predictions = self.model.predict(inputs)
 
-            def direction(prediction):
-                max_index = 0
-
-                for i in range(1, direction_count):
-                    if prediction[i] > prediction[max_index]:
-                        max_index = i
-
-                return max_index
-
-                # minimum = 0
-                # for i in range(0, direction_count):
-                #     if prediction[i] < minimum:
-                #         minimum = prediction[i]
-
-                # prediction_sum = 0
-                # for i in range(0, direction_count):
-                #     prediction_sum += prediction[i] - minimum
-
-                # rand = random.random() * prediction_sum - 0.01
-                
-                # #print('rand before:', rand)
-
-                # for i in range(0, direction_count):
-                #     rand -= prediction[i] - minimum
-                #     if(rand <= 0):
-                #         return i
-
-                # print('rand after:', rand)
-
-
-            return [direction(prediction) for prediction in predictions]
+            return [self.policy(prediction) for prediction in predictions]
 
     def worlds_to_np_array(self, worlds):
         raise NotImplementedError
@@ -81,11 +67,7 @@ class BaseAi:
 
     def train(self, learnData, epochs=1):
         inputs = self.worlds_to_np_array(learnData)
-
-        targets = np.empty((len(learnData), direction_count))
-        targets.fill(-np.Infinity)
-        for i, data in enumerate(learnData):
-            targets[i][data.action_index] = data.reward
+        targets = self.target_output(learnData)
 
         return self.model.fit(inputs, targets, batch_size=512, epochs=epochs, verbose=0)
 
@@ -93,8 +75,17 @@ class BaseAi:
         for layer in self.model.layers:
             print(layer.get_weights()) 
 
-    def save(self, prefix='', suffix=''):
-        self.model.save('./models_output/' + prefix +  str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M")) + suffix + '.h5')
+    def save(self, time, prefix='', suffix=''):
+        self.model.save('./models_output/' + prefix +  str(time) + suffix + '.h5')
+
+    def target_output(self, train_data_list):
+        targets = np.empty((len(train_data_list), direction_count))
+        targets.fill(-np.Infinity)
+
+        for i, data in enumerate(train_data_list):
+            targets[i][data.action_index] = data.reward
+
+        return targets
 
 class HardcodedAi(BaseAi):
     def __init__(self, epsilon = 0.1):
@@ -128,10 +119,10 @@ class HardcodedAi(BaseAi):
     def train(self, learnData):
         return EmptyHistory()
 
-    def save(self, prefix='', suffix=''):
+    def save(self, time, prefix='', suffix=''):
         pass
 
-class RotatedAI(BaseAi):
+class RotatedAI(BaseAi):            
     def predict_best_moves(self, worlds):
         unrotated_inputs = self.worlds_to_np_array(worlds)
         shape = unrotated_inputs.shape
@@ -153,15 +144,24 @@ class RotatedAI(BaseAi):
         predictions = self.model.predict(inputs)
 
         def direction(world_id):
-            max_index = world_id * 3
+            # with probability epsilon, return a random action
+            if random.random() < self.epsilon:
+                return action_indices[world_id * 3 + random.randint(0, 2)]
 
-            for i in range(1, 3):
-                if random.random() < self.epsilon:
-                    return random.randint(0, 3)
+            max_index = -1
+            max_estimate = float("-Infinity")
 
+            for i in range(0, 3):
                 index = world_id * 3 + i
-                if predictions[index] > predictions[max_index]:
+
+                if "dies" in train_settings:
+                    estimate = predictions[index][0] - predictions[index][1] * 0.2
+                else:
+                    estimate = predictions[index]
+
+                if estimate > max_estimate:
                     max_index = index
+                    max_estimate = estimate
 
             return action_indices[max_index]
 
@@ -173,14 +173,28 @@ class RotatedAI(BaseAi):
 
     def train(self, learnData, epochs=1):
         inputs = self.worlds_to_np_array(learnData)
-        
-        targets = np.empty((len(learnData), 1))
 
         for i, data in enumerate(learnData):
             inputs[i] = self.rotate(inputs[i], data.action_index)
-            targets[i][0] = data.reward
+        
+        targets = self.target_output(learnData)
 
         return self.model.fit(inputs, targets, batch_size=512, epochs=epochs, verbose=0)
+    
+    def target_output(self, train_data_list):
+        if "dies" in train_settings:
+            targets = np.empty((len(train_data_list), 2))
+
+            for i, data in enumerate(train_data_list):
+                targets[i][0] = data.reward
+                targets[i][1] = 1 if data.died else 0
+        else:
+            targets = np.empty((len(train_data_list), 1))
+
+            for i, data in enumerate(train_data_list):
+                targets[i][0] = data.reward
+
+        return targets
 
 
 class EmptyHistory:
@@ -211,5 +225,5 @@ class AStarAI(BaseAi):
     def train(self, learnData):
         return EmptyHistory()
 
-    def save(self, prefix='', suffix=''):
+    def save(self, time, prefix='', suffix=''):
         pass

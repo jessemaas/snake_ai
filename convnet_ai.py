@@ -70,8 +70,8 @@ class ConvnetAi(ai.BaseAi):
 
         return result
 
-    def save(self, prefix='', suffix=''):
-        super().save(prefix + 'convnet-ai-', suffix)
+    def save(self, time, prefix='', suffix=''):
+        super().save(time, prefix + 'convnet-ai-', suffix)
 
 class CenteredAI(ai.BaseAi):
     """
@@ -154,14 +154,15 @@ class CenteredAI(ai.BaseAi):
         return result
 
 
-    def save(self, prefix='', suffix=''):
-        super().save(prefix + 'centered-ai-', suffix)
+    def save(self, time, prefix='', suffix=''):
+        super().save(time, prefix + 'centered-ai-', suffix)
         
 
 class RotatedCenteredAI(ai.RotatedAI):
     def __init__(self, save_file=None):
         self.tile_classes = 5
         self.epsilon = 0.01
+        self.num_output = 2 if "dies" in ai.train_settings else 1
 
         if save_file == None:
             # construct model
@@ -187,14 +188,14 @@ class RotatedCenteredAI(ai.RotatedAI):
 
             if True:
                 # used for "teacher" goal and "food_probabilty" goal
-                model.add(layers.Dense(1, activation="sigmoid"))
+                model.add(layers.Dense(self.num_output, activation="sigmoid"))
             else:
                 # used for predicting the reward
-                model.add(layers.Dense(1, activation='relu'))
+                model.add(layers.Dense(self.num_output, activation='relu'))
             
 
             self.model = model
-            optimizer = keras.optimizers.Adam()
+            optimizer = keras.optimizers.Adam(learning_rate=0.000001)
             model.compile(optimizer=optimizer, loss='mean_squared_error')
         else:
             # read model from file
@@ -215,5 +216,5 @@ class RotatedCenteredAI(ai.RotatedAI):
     def rotate(self, world_as_np_array, amount):
         return np.rot90(world_as_np_array, amount, (0, 1))
 
-    def save(self, prefix='', suffix=''):
-        super().save(prefix + 'centered-rotated-ai-', suffix)
+    def save(self, time, prefix='', suffix=''):
+        super().save(time, prefix + 'centered-rotated-ai-', suffix)

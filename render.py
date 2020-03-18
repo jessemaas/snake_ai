@@ -39,7 +39,7 @@ class Renderer:
                 stop = True
 
 
-            if time.time() - last_update > 0.5:
+            if time.time() - last_update > 0.2:
                 predictions = self.ai.predict_best_moves([self.world])
                 print(game.directions[predictions[0]])
 

@@ -43,8 +43,8 @@ class SimpleAi(ai.BaseAi):
         
         return result
     
-    def save(self, prefix='', suffix=''):
-        super().save(prefix + 'simple-ai-', suffix)
+    def save(self, time, prefix='', suffix=''):
+        super().save(time, prefix + 'simple-ai-', suffix)
 
 class First2BodyPartsAI(ai.BaseAi):
     def __init__(self, file=None):

@@ -42,7 +42,7 @@ class LSTMAi(ai.BaseAi):
         
         return result
 
-    def save(self, prefix='', suffix=''):
-        super().save(prefix + 'lstm-ai-', suffix)
+    def save(self, time, prefix='', suffix=''):
+        super().save(time, prefix + 'lstm-ai-', suffix)
 
     
