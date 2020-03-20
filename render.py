@@ -10,7 +10,7 @@ screen_size = (game.world_width * tile_size, game.world_height * tile_size)
 
 
 class Renderer:
-    def __init__(self, ai = LSTMAi()):
+    def __init__(self, ai = 'player'):
         self.world = game.World()
         self.ai = ai
         self.screen = pygame.display.set_mode(screen_size)
@@ -20,6 +20,7 @@ class Renderer:
         status = game.MoveResult.normal
 
         stop = False
+        score = 0
 
         while not stop:
             for event in pygame.event.get():
@@ -27,31 +28,37 @@ class Renderer:
                     stop = True
             pressed = pygame.key.get_pressed()
 
-            # if pressed[pygame.K_w]:
-            #     world.set_direction((0, -1))
-            # elif pressed[pygame.K_s]:
-            #     world.set_direction((0, 1))
-            # if pressed[pygame.K_a]:
-            #     world.set_direction((-1, 0))
-            # elif pressed[pygame.K_d]:
-            #     world.set_direction((1, 0))
+            if self.ai == 'player':
+                if pressed[pygame.K_w]:
+                    self.world.set_direction((0, -1))
+                elif pressed[pygame.K_s]:
+                    self.world.set_direction((0, 1))
+                if pressed[pygame.K_a]:
+                    self.world.set_direction((-1, 0))
+                elif pressed[pygame.K_d]:
+                    self.world.set_direction((1, 0))
             if pressed[pygame.K_ESCAPE]:
                 stop = True
 
 
-            if time.time() - last_update > 0.2:
-                predictions = self.ai.predict_best_moves([self.world])
-                print(game.directions[predictions[0]])
+            if time.time() - last_update > 0.5:
+                if self.ai != 'player':
+                    predictions = self.ai.predict_best_moves([self.world])
+                    print(game.directions[predictions[0]])
 
-                self.world.set_direction(
-                    game.directions[predictions[0]]
-                )
+                    self.world.set_direction(
+                        game.directions[predictions[0]]
+                    )
                 
                 last_update = time.time()
                 
                 if(status != game.MoveResult.death):
                     status = self.world.forward()
                     print(status)
+                    print(score)
+
+                    if status == game.MoveResult.eat:
+                        score += 1
 
                 if(status == game.MoveResult.death):
                     self.screen.fill((200, 50, 50))

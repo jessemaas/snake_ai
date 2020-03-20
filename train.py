@@ -178,15 +178,6 @@ def train_supervised(teacher_ai, student_ai, rounds):
         trainer.ai = student_ai
         trainer.train(3)
 
-# ai = simple_ai.SimpleAi()
-# ai = ai_module.HardcodedAi()
-# ai = convnet_ai.CenteredAI()
-# ai = last_n_bodyparts_ai.LastNBodyParts(2)
-# ai = last_n_bodyparts_ai.LastNBodyParts(3)
-# ai = convnet_ai.RotatedCenteredAI()
-# ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
-# ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
-# ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 14:26:59-above-6.h5')
 
 averages = []
 losses = []
@@ -196,8 +187,8 @@ graphic_output_interval = 10
 smooth_average_count = graphic_output_interval
 pyplot.figure(0)
 
-epochs = 250
-simultaneous_worlds = 1024
+epochs = 500
+simultaneous_worlds = 512
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = False
@@ -210,23 +201,35 @@ best_average = 0
 best_model = None
 
 if __name__ == "__main__":
-    ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 13:45:42-above-6.h5')
+    # ai = simple_ai.SimpleAi()
+    # ai = ai_module.HardcodedAi()
+    # ai = convnet_ai.CenteredAI()
+    # ai = last_n_bodyparts_ai.LastNBodyParts(2)
+    # ai = last_n_bodyparts_ai.LastNBodyParts(3)
+    # ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
+    # ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
+    # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 14:26:59-above-6.h5')
+    # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 13:45:42-above-6.h5')
+    ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 20:58:56-above-8.h5')
+    # ai = convnet_ai.RotatedCenteredAI()
 
     ai.epsilon = 0.05
     min_epsilon = 0.01
     ai.epsilon = min_epsilon
     epsilon_decrement_factor = 0.99
 
-    learning_rate = K.get_value(ai.model.optimizer.lr)
+    # learning_rate = K.get_value(ai.model.optimizer.lr)
+    learning_rate = 0.00001
     min_learning_rate = learning_rate * 0.1
     #learning_rate = min_learning_rate
     learning_rate_decrement_factor = 0.99
+    ai.set_learning_rate(learning_rate)
 
     training_start = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     last_graph_name = None
     print('training_start =', training_start)
 
-    done_output = 6
+    done_output = 10
 
     if initialize_supervised:
         if verbosity >= 1:
@@ -330,15 +333,9 @@ if __name__ == "__main__":
             if verbosity == 1:
                 print(str(smooth_average_count) + '-game average:', smoothed_averages[-1])
 
-            if done_output < 7 and smoothed_averages[-1] > 7:
-                ai.save(training_start, '', '-above-7')
-                done_output = 7
-            if done_output < 8 and smoothed_averages[-1] > 8:
-                ai.save(training_start, '', '-above-8')
-                done_output = 8
-            if done_output < 9 and smoothed_averages[-1] > 9:
-                ai.save(training_start, '', '-above-9')
-                done_output = 9
+            if smoothed_averages[-1] > done_output:
+                ai.save(training_start, '', '-above-' + str(done_output))
+                done_output += 1
 
             if switch_teacher_to_reinforcement and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
                 train_settings.remove("teacher")

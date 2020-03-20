@@ -154,8 +154,24 @@ class RotatedAI(BaseAi):
             for i in range(0, 3):
                 index = world_id * 3 + i
 
-                if "dies" in train_settings:
-                    estimate = predictions[index][0] - predictions[index][1] * 0.2
+                if True:
+                    action = game.directions[action_indices[index]]
+                                        
+                    w = worlds[world_id] 
+                    snake_head = w.snake[0]
+                    above_snake_head = snake_head[0] + action[0], snake_head[1] + action[1]
+
+                    # print(above)
+                    # estimate = predictions[index][0] - (2 if above[3] != 1 and above[0] != 1 else 0)
+                    estimate = predictions[index][0] - (2 if
+                        above_snake_head[0] < 0 or
+                        above_snake_head[0] >= w.width or
+                        above_snake_head[1] < 0 or
+                        above_snake_head[1] >= w.height or
+                        above_snake_head in w.snake[1:-1]
+                        else 0)
+                elif "dies" in train_settings:
+                    estimate = predictions[index][0] - predictions[index][1] * 0.2# - (2 if inputs[index, game.world_width - 1, game.world_height, 3] != 1 else 0)
                 else:
                     estimate = predictions[index]
 

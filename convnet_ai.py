@@ -122,10 +122,10 @@ class CenteredAI(ai.BaseAi):
         """
         Converts the worlds to into 2D maps, centered around the head of the snake.
         """
-        food_encoding = np.array([1, 0, 0, 0, 0])
-        snake_tail_encoding = np.array([0, 1, 0, 0, 0])
-        snake_head_encoding = np.array([0, 0, 1, 0, 0])
-        empty_encoding = np.array([0, 0, 0, 1, 0])
+        food_encoding =         np.array([1, 0, 0, 0, 0])
+        snake_tail_encoding =   np.array([0, 1, 0, 0, 0])
+        snake_head_encoding =   np.array([0, 0, 1, 0, 0])
+        empty_encoding =        np.array([0, 0, 0, 1, 0])
 
         # initialize all tiles to "outside the borders"
         result = np.zeros((len(worlds), game.world_width * 2 - 1, game.world_height * 2 - 1, self.tile_classes), dtype=np.float)
@@ -148,7 +148,7 @@ class CenteredAI(ai.BaseAi):
             # set right tiles to "snake"
             for snake_x, snake_y in world.snake:
                 result[world_index, snake_x + x_offset, snake_y + y_offset] = snake_tail_encoding
-            head_x, head_y = world.snake[0]
+                
             result[world_index, head_x + x_offset, head_y + y_offset] = snake_head_encoding
 
         return result
@@ -174,7 +174,11 @@ class RotatedCenteredAI(ai.RotatedAI):
 
             if complex_model:
                 # a more complex model
-                model.add(layers.Conv2D(6, (5, 5)))
+                model.add(layers.Conv2D(6, (3, 3)))
+                model.add(layers.PReLU())
+                model.add(layers.Conv2D(6, (3, 3)))
+                model.add(layers.PReLU())
+                # model.add(layers.Conv2D(6, (5, 5), padding='same',))
                 model.add(layers.Conv2D(6, (3, 3)))
             else:
                 # a simpler model
@@ -195,7 +199,7 @@ class RotatedCenteredAI(ai.RotatedAI):
             
 
             self.model = model
-            optimizer = keras.optimizers.Adam(learning_rate=0.000001)
+            optimizer = keras.optimizers.Adam(learning_rate=0.0001)
             model.compile(optimizer=optimizer, loss='mean_squared_error')
         else:
             # read model from file
