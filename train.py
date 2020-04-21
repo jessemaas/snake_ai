@@ -1,10 +1,13 @@
+import util
+
+total_time = util.start_timer()
+
 import game
 import lstm_ai
 import ai as ai_module
 import last_n_bodyparts_ai
 import convnet_ai
 import simple_ai
-import util
 
 # import render
 
@@ -75,7 +78,7 @@ class Trainer:
 
         for i in range(len(self.worlds_with_train_data)):
             world, train_data = self.worlds_with_train_data[i]
-            world.set_direction(util.get_if_cupy(game.directions[move_indices[i]]))
+            world.set_direction(game.directions[util.get_if_cupy(move_indices[i])])
             result = world.forward()
 
             learn_data = ai_module.LearnData(world, move_indices[i], 0)
@@ -389,5 +392,7 @@ if __name__ == "__main__":
         for i in range(10):
             renderer = render.Renderer(ai)
         renderer.render_loop()
+
+util.end_timer(total_time, 'total_time')
 
 util.print_timers()
