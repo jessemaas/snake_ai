@@ -2,7 +2,14 @@ import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
 from tensorflow.keras.models import load_model
-import numpy as np
+
+import util
+
+if util.use_cupy:
+    import cupy as np
+else:
+    import numpy as np
+    
 
 import random
 
@@ -10,7 +17,9 @@ import ai
 import datetime
 
 class SimpleAi(ai.BaseAi):
-    def __init__(self, file=None):
+    def __init__(self, train_settings, file=None):
+        super().__init__(train_settings)
+
         if file == None:
             model = models.Sequential()
 
@@ -47,7 +56,9 @@ class SimpleAi(ai.BaseAi):
         super().save(time, prefix + 'simple-ai-', suffix)
 
 class First2BodyPartsAI(ai.BaseAi):
-    def __init__(self, file=None):
+    def __init__(self, train_settings, file=None):
+        super().__init__(train_settings)
+        
         self.body_parts = 2
 
         if file == None:

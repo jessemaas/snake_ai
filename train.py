@@ -4,11 +4,17 @@ import ai as ai_module
 import last_n_bodyparts_ai
 import convnet_ai
 import simple_ai
+import util
 
-import render
+# import render
 
 from matplotlib import pyplot
-import numpy as np
+
+if util.use_cupy:
+    import cupy as np
+else:
+    import numpy as np
+    
 
 import tensorflow as tf
 from tensorflow.keras import backend as K
@@ -25,27 +31,20 @@ train_settings = [
     "reinforcement",        # whether to use reinforcement learning
 #    "distance_food",       # whether to use the distance_food goal
     "probability_of_food",  # whether to use the probability_of_food goal
-    "dies",                 # whether to keep track of the agent dying the next step
+#    "dies",                 # whether to keep track of the agent dying the next step
+    "probability_next_food",
+    "cupy"
 ]
 
 ai_module.train_settings = train_settings
+
 
 if False:
     # use cpu
     print()
     print('using CPU!')
     print()
-
-    config = tf.ConfigProto(
-        allow_soft_placement=True,
-        intra_op_parallelism_threads=16,
-        inter_op_parallelism_threads=16, 
-
-        device_count = {'GPU' : 0, 'CPU': 1}
-    )
-
-    session = tf.Session(config=config)
-    K.set_session(session)
+    tf.config.experimental.set_visible_devices([], 'GPU')
 
 class Trainer:
     def __init__(self, ai, parallel_sessions):
@@ -54,17 +53,20 @@ class Trainer:
         self.worlds_with_train_data = [(game.World(), self.train_data[i]) for i in range(parallel_sessions)]
 
     def step(self):
+        start_timer = util.start_timer()
         """
         performs one simulation step and does necessary work for training
         """
 
         if "teacher" in train_settings:
-            teacher_ai = ai_module.HardcodedAi()
+            teacher_ai = ai_module.HardcodedAi(train_settings)
             teacher_move_indices = teacher_ai.predict_best_moves(
                 [world for world, train_data in self.worlds_with_train_data]
             )
 
         # predict moves
+        util.times_predicted += 1
+        util.predicted_actions += len(self.worlds_with_train_data)
         move_indices = self.ai.predict_best_moves(
             [world for world, train_data in self.worlds_with_train_data]
         )
@@ -73,7 +75,7 @@ class Trainer:
 
         for i in range(len(self.worlds_with_train_data)):
             world, train_data = self.worlds_with_train_data[i]
-            world.set_direction(game.directions[move_indices[i]])
+            world.set_direction(util.get_if_cupy(game.directions[move_indices[i]]))
             result = world.forward()
 
             learn_data = ai_module.LearnData(world, move_indices[i], 0)
@@ -133,9 +135,12 @@ class Trainer:
 
         for index in removed_world_indices:
             del self.worlds_with_train_data[index]
+        
+        util.end_timer(start_timer, 'step')
     
     def simulate_entire_game(self):
         # counter = 0
+        old_len = None
         while(len(self.worlds_with_train_data) > 0):
             # counter += 1
 
@@ -145,9 +150,10 @@ class Trainer:
             #         renderer.world = world
             #         renderer.render_loop()
             #     return
-
-            if verbosity >= 2:
-                print('step; worlds left =', len(self.worlds_with_train_data))
+            new_len = len(self.worlds_with_train_data)
+            if verbosity >= 2 and old_len != new_len:
+                print('step; worlds left =', new_len)
+                old_len = new_len
             self.step()
 
     def train(self, epochs=1):
@@ -187,18 +193,19 @@ graphic_output_interval = 10
 smooth_average_count = graphic_output_interval
 pyplot.figure(0)
 
-epochs = 500
-simultaneous_worlds = 512
+epochs = 5
+simultaneous_worlds = 256
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = False
 
-verbosity = 1
+verbosity = 2
 initialize_supervised = False
 supervised_rounds = 5
 
 best_average = 0
 best_model = None
+
 
 if __name__ == "__main__":
     # ai = simple_ai.SimpleAi()
@@ -210,12 +217,11 @@ if __name__ == "__main__":
     # ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
     # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 14:26:59-above-6.h5')
     # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 13:45:42-above-6.h5')
-    ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 20:58:56-above-8.h5')
-    # ai = convnet_ai.RotatedCenteredAI()
+    # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-20 09:52:24-above-12.h5')
+    ai = convnet_ai.RotatedCenteredAI(train_settings)
 
     ai.epsilon = 0.05
     min_epsilon = 0.01
-    ai.epsilon = min_epsilon
     epsilon_decrement_factor = 0.99
 
     # learning_rate = K.get_value(ai.model.optimizer.lr)
@@ -240,7 +246,7 @@ if __name__ == "__main__":
             
             old_verbosity = verbosity
             verbosity = min(verbosity, 1)
-            train_supervised(ai_module.HardcodedAi(), ai, 1024 * 8)
+            train_supervised(ai_module.HardcodedAi(train_settings), ai, 1024 * 8)
             verbosity = old_verbosity
 
             if verbosity >= 2:
@@ -264,10 +270,11 @@ if __name__ == "__main__":
 
         # ai.epsilon *= epsilon_decrement_factor
         # print("start epoch")
-        # print(epoch_id)
+        if verbosity >= 1:
+            print("starting epoch:", epoch_id)
         
 
-        if epoch_id == 3:
+        if epoch_id == 1:
             # performs some tests to make sure the GPU works
             name = tf.test.gpu_device_name()
             if name:
@@ -382,3 +389,5 @@ if __name__ == "__main__":
         for i in range(10):
             renderer = render.Renderer(ai)
         renderer.render_loop()
+
+util.print_timers()

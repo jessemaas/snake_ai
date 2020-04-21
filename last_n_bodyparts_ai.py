@@ -1,13 +1,21 @@
 import ai
+import util
 
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
-import numpy as np
+
+if util.use_cupy:
+    import cupy as np
+else:
+    import numpy as np
+    
 
 import datetime
 
 class LastNBodyParts(ai.BaseAi):
-    def __init__(self, n):
+    def __init__(self, n, train_settings):
+        super().__init__(train_settings)
+        
         model = models.Sequential()
         # model.add(layers.Dense(ai.direction_count, input_shape=(2 * n + 2,)))
         model.add(layers.Dense(16, input_shape=(2 * n + 2,), activation='relu'))

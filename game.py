@@ -42,14 +42,16 @@ class World:
         if new_head == self.food:
             self.snake.insert(0, new_head)
             self.place_food()
-            return MoveResult.eat           
-        elif new_head[0] < 0 or new_head[0] >= self.width or new_head[1] < 0 or new_head[1] >= self.height or new_head in self.snake:
-            self.snake_alive = False
-            return MoveResult.death
+            return MoveResult.eat
         else:
             del self.snake[-1]
-            self.snake.insert(0, new_head)
-            return MoveResult.normal
+
+            if new_head[0] < 0 or new_head[0] >= self.width or new_head[1] < 0 or new_head[1] >= self.height or new_head in self.snake:
+                self.snake_alive = False
+                return MoveResult.death
+            else:
+                self.snake.insert(0, new_head)
+                return MoveResult.normal
 
     def place_food(self):
         self.food = (random.randint(0, self.width - 1), random.randint(0, self.height - 1))

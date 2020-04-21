@@ -1,29 +1,49 @@
 import ai
 import game
-
+import util
 
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
 from tensorflow.keras.models import load_model
-import numpy as np
+
+if util.use_cupy:
+    import cupy as np
+else:
+    import numpy as np
+    
 #from keras.backend import tf
-from tensorflow.keras.backend import set_session
+#from tensorflow.compat.v1.keras.backend import set_session
 
 import datetime
 
-config = tf.compat.v1.ConfigProto()
+#config = tf.compat.v1.ConfigProto()
 
-config.gpu_options.allow_growth = True
-config.gpu_options.force_gpu_compatible = True
+# config.gpu_options.allow_growth = True
+# config.gpu_options.force_gpu_compatible = True
 
-set_session(tf.Session(config=config))
+# set_session(tf.Session(config=config))
+"""
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+  try:
+    # Currently, memory growth needs to be the same across GPUs
+    for gpu in gpus:
+      tf.config.set_memory_growth(gpu, True)
+    
+  except RuntimeError as e:
+    # Memory growth must be set before GPUs have been initialized
+    print(e)
+"""
 
 tile_classes = 4
 
 class ConvnetAi(ai.BaseAi):
-    def __init__(self, save_file=None):
+    def __init__(self, train_settings, save_file=None):
+        super().__init__(train_settings)
+
         self.outside_world_margin = 1
+        
         if save_file == None:
             double_margin = self.outside_world_margin * 2
 
@@ -77,7 +97,9 @@ class CenteredAI(ai.BaseAi):
     """
     This AI is a convolutional neural network. It has as input a map of the world, centered around the head of the snake.
     """
-    def __init__(self, save_file=None):
+    def __init__(self, train_settings, save_file=None):
+        super().__init__(train_settings)
+
         self.tile_classes = 5
 
         if save_file == None:
@@ -159,10 +181,11 @@ class CenteredAI(ai.BaseAi):
         
 
 class RotatedCenteredAI(ai.RotatedAI):
-    def __init__(self, save_file=None):
+    def __init__(self, train_settings, save_file=None):
+        super().__init__(train_settings)
+
         self.tile_classes = 5
         self.epsilon = 0.01
-        self.num_output = 2 if "dies" in ai.train_settings else 1
 
         if save_file == None:
             # construct model
@@ -190,8 +213,10 @@ class RotatedCenteredAI(ai.RotatedAI):
                 model.add(layers.Dense(32))
                 model.add(layers.PReLU())
 
-            if True:
+            if False:
                 # used for "teacher" goal and "food_probabilty" goal
+                model.add(layers.Dense(self.num_output, activation="sigmoid"))
+            if True:
                 model.add(layers.Dense(self.num_output, activation="sigmoid"))
             else:
                 # used for predicting the reward

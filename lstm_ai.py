@@ -1,6 +1,12 @@
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
-import numpy as np
+import util
+
+if util.use_cupy:
+    import cupy as np
+else:
+    import numpy as np
+    
 from functools import reduce
 
 import random
@@ -10,7 +16,9 @@ import datetime
 
 
 class LSTMAi(ai.BaseAi):
-    def __init__(self, file=None):
+    def __init__(self, train_settings, file=None):
+        super().__init__(train_settings)
+        
         if file == None:
             model = models.Sequential()
             model.add(layers.Masking(mask_value=np.NaN, input_shape=(ai.max_snake_len, ai.max_snake_len * 2)))

@@ -1,16 +1,20 @@
+import game
+import util
+
+import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import models, layers
-import numpy as np
-from tensorflow.keras import backend as K
 
-import game
-# import train
+if util.use_cupy:
+    import cupy as np
+else:
+    import numpy as np
+
+from tensorflow.keras import backend as K
 
 import random
 import math
 import datetime
-
-train_settings = None
 
 sign = lambda x: x and (1, -1)[x < 0]
 
@@ -36,7 +40,7 @@ def custom_loss(y_true, y_pred):
     return K.square(max_diff)
 
 class BaseAi:
-    def __init__(self):
+    def __init__(self, train_settings):
         self.epsilon = 0.05
         self.model = None
         self.policy = self.simple_policy
@@ -88,7 +92,8 @@ class BaseAi:
         return targets
 
 class HardcodedAi(BaseAi):
-    def __init__(self, epsilon = 0.1):
+    def __init__(self, train_settings, epsilon = 0.1):
+        super().__init__(train_settings)
         self.epsilon = epsilon
 
     def predict_best_moves(self, worlds):
@@ -122,13 +127,33 @@ class HardcodedAi(BaseAi):
     def save(self, time, prefix='', suffix=''):
         pass
 
-class RotatedAI(BaseAi):            
+class RotatedAI(BaseAi):  
+    def __init__(self, train_settings):
+        super().__init__(train_settings)
+        self.num_output = 0
+
+        index = 0
+        self.dies = "dies" in train_settings
+        self.probability_next_food = "probability_next_food" in train_settings
+        
+        self.reward_index = index
+        index += 1
+
+        if self.dies:
+            self.dies_index = index
+            index += 1
+
+        if self.probability_next_food:
+            self.probability_next_food_index = index
+            index += 1
+
+        self.num_output = index
+
     def predict_best_moves(self, worlds):
         unrotated_inputs = self.worlds_to_np_array(worlds)
         shape = unrotated_inputs.shape
         inputs = np.empty((shape[0] * 3,) + shape[1:])
         action_indices = np.empty(shape[0] * 3, dtype=int)
-
         for world_id in range(len(worlds)):
             i = 0
             for action_index in range(4):
@@ -141,7 +166,9 @@ class RotatedAI(BaseAi):
                     action_indices[index] = action_index
                     i += 1
 
-        predictions = self.model.predict(inputs)
+        start = util.start_timer()
+        predictions = self.model.predict(as_tensor(inputs))
+        util.end_timer(start, 'predictions')
 
         def direction(world_id):
             # with probability epsilon, return a random action
@@ -150,30 +177,36 @@ class RotatedAI(BaseAi):
 
             max_index = -1
             max_estimate = float("-Infinity")
+            
 
             for i in range(0, 3):
                 index = world_id * 3 + i
+                prediction = predictions[index]
+
+                if self.num_output >= 2:
+                    estimate = prediction[self.reward_index]
+                else:
+                    estimate = prediction
 
                 if True:
-                    action = game.directions[action_indices[index]]
+                    action = game.directions[util.get_if_cupy(action_indices[index])]
                                         
                     w = worlds[world_id] 
                     snake_head = w.snake[0]
                     above_snake_head = snake_head[0] + action[0], snake_head[1] + action[1]
 
-                    # print(above)
-                    # estimate = predictions[index][0] - (2 if above[3] != 1 and above[0] != 1 else 0)
-                    estimate = predictions[index][0] - (2 if
+                    estimate -= (2 if
                         above_snake_head[0] < 0 or
                         above_snake_head[0] >= w.width or
                         above_snake_head[1] < 0 or
                         above_snake_head[1] >= w.height or
                         above_snake_head in w.snake[1:-1]
                         else 0)
-                elif "dies" in train_settings:
-                    estimate = predictions[index][0] - predictions[index][1] * 0.2# - (2 if inputs[index, game.world_width - 1, game.world_height, 3] != 1 else 0)
-                else:
-                    estimate = predictions[index]
+                elif self.dies:
+                    estimate -= prediction[self.dies_index] * 0.2
+                
+                if self.probability_next_food:
+                    estimate += prediction[self.probability_next_food_index] * prediction[self.reward_index]
 
                 if estimate > max_estimate:
                     max_index = index
@@ -195,20 +228,20 @@ class RotatedAI(BaseAi):
         
         targets = self.target_output(learnData)
 
-        return self.model.fit(inputs, targets, batch_size=512, epochs=epochs, verbose=0)
+        start = util.start_timer()
+        train_result = self.model.fit(as_tensor(inputs), as_tensor(targets), batch_size=512, epochs=epochs, verbose=0)
+        util.end_timer(start, 'fitting')
+        return train_result
     
     def target_output(self, train_data_list):
-        if "dies" in train_settings:
-            targets = np.empty((len(train_data_list), 2))
-
-            for i, data in enumerate(train_data_list):
-                targets[i][0] = data.reward
-                targets[i][1] = 1 if data.died else 0
-        else:
-            targets = np.empty((len(train_data_list), 1))
-
-            for i, data in enumerate(train_data_list):
-                targets[i][0] = data.reward
+        targets = np.empty((len(train_data_list), self.num_output))
+        
+        for i, data in enumerate(train_data_list):
+            targets[i][self.reward_index] = data.reward
+            if self.dies:
+                targets[i][self.dies_index] = 1 if data.died else 0
+            if self.probability_next_food:
+                targets[i][self.probability_next_food_index] = 1 if data.total_food >= 2 else 0
 
         return targets
 
@@ -218,7 +251,8 @@ class EmptyHistory:
         self.history = {"loss": 0}
 
 class AStarAI(BaseAi):
-    def __init__(self, epsilon = 0.1):
+    def __init__(self, train_settings, epsilon = 0.1):
+        super().__init__(train_settings)
         self.epsilon = epsilon
 
     def predict_best_moves(self, worlds):
@@ -243,3 +277,10 @@ class AStarAI(BaseAi):
 
     def save(self, time, prefix='', suffix=''):
         pass
+
+def as_tensor(cupy_array):
+    if util.use_cupy:
+        dlpack_tensor = cupy_array.toDlpack()
+        return tf.experimental.dlpack.from_dlpack(dlpack_tensor)
+    else:
+        return cupy_array
