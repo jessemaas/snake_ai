@@ -150,21 +150,27 @@ class RotatedAI(BaseAi):
         self.num_output = index
 
     def predict_best_moves(self, worlds):
-        unrotated_inputs = self.worlds_to_np_array(worlds)
-        shape = unrotated_inputs.shape
-        inputs = np.empty((shape[0] * 3,) + shape[1:])
-        action_indices = np.empty(shape[0] * 3, dtype=int)
-        for world_id in range(len(worlds)):
-            i = 0
-            for action_index in range(4):
-                previous_direction = worlds[world_id].snake_direction
+        l = len(worlds)
 
-                if game.directions[action_index] != (-previous_direction[0], -previous_direction[1]):
-                    index = world_id * 3 + i
+        if l in tensor_chache:
+            inputs, action_indices = tensor_chache[l]
+        else:
+            unrotated_inputs = self.worlds_to_np_array(worlds)
+            shape = unrotated_inputs.shape
+            inputs = np.empty((shape[0] * 3,) + shape[1:])
+            action_indices = np.empty(shape[0] * 3, dtype=int)
+            for world_id in range(len(worlds)):
+                i = 0
+                for action_index in range(4):
+                    previous_direction = worlds[world_id].snake_direction
 
-                    inputs[index] = self.rotate(unrotated_inputs[world_id], action_index)
-                    action_indices[index] = action_index
-                    i += 1
+                    if game.directions[action_index] != (-previous_direction[0], -previous_direction[1]):
+                        index = world_id * 3 + i
+
+                        inputs[index] = self.rotate(unrotated_inputs[world_id], action_index)
+                        action_indices[index] = action_index
+                        i += 1
+            tensor_chache[l] = (inputs, action_indices)
 
         start = util.start_timer()
         predictions = self.model.predict(as_tensor(inputs))
@@ -284,3 +290,5 @@ def as_tensor(cupy_array):
         return tf.experimental.dlpack.from_dlpack(dlpack_tensor)
     else:
         return cupy_array
+
+tensor_chache = {}

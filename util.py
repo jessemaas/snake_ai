@@ -26,7 +26,7 @@ times_predicted = 0
 predicted_actions = 0
 
 
-use_cupy = False
+use_cupy = True
 
 def get_if_cupy(value):
     if use_cupy:
