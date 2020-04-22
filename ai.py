@@ -283,3 +283,5 @@ class AStarAI(BaseAi):
 
     def save(self, time, prefix='', suffix=''):
         pass
+
+tensor_chache = dict()
