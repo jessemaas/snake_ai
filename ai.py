@@ -173,7 +173,7 @@ class RotatedAI(BaseAi):
             tensor_chache[l] = (inputs, action_indices)
 
         start = util.start_timer()
-        predictions = self.model.predict(as_tensor(inputs))
+        predictions = self.model.predict(util.as_tensor(inputs))
         util.end_timer(start, 'predictions')
 
         def direction(world_id):
@@ -235,7 +235,7 @@ class RotatedAI(BaseAi):
         targets = self.target_output(learnData)
 
         start = util.start_timer()
-        train_result = self.model.fit(as_tensor(inputs), as_tensor(targets), batch_size=512, epochs=epochs, verbose=0)
+        train_result = self.model.fit(util.as_tensor(inputs), util.as_tensor(targets), batch_size=512, epochs=epochs, verbose=0)
         util.end_timer(start, 'fitting')
         return train_result
     
@@ -283,12 +283,3 @@ class AStarAI(BaseAi):
 
     def save(self, time, prefix='', suffix=''):
         pass
-
-def as_tensor(cupy_array):
-    if util.use_cupy:
-        dlpack_tensor = cupy_array.toDlpack()
-        return tf.experimental.dlpack.from_dlpack(dlpack_tensor)
-    else:
-        return cupy_array
-
-tensor_chache = {}

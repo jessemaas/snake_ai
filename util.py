@@ -1,5 +1,6 @@
 from time import clock
 from collections import defaultdict
+import tensorflow as tf
 
 timers = defaultdict(lambda: 0)
 
@@ -33,3 +34,10 @@ def get_if_cupy(value):
         return value.get()
     else:
         return value
+
+def as_tensor(cupy_array):
+    if use_cupy:
+        dlpack_tensor = cupy_array.toDlpack()
+        return tf.experimental.dlpack.from_dlpack(dlpack_tensor)
+    else:
+        return cupy_array
