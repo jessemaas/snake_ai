@@ -1,4 +1,4 @@
-from time import clock
+from time import perf_counter as clock
 from collections import defaultdict
 import tensorflow as tf
 

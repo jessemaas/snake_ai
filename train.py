@@ -158,9 +158,12 @@ class Trainer:
                 print('step; worlds left =', new_len)
                 old_len = new_len
             self.step()
+        
+        if verbosity >= 2:
+            print('max steps:', max((len(data) for data in self.train_data)))
 
     def train(self, epochs=1):
-        # flatten train data, TODO: write something I understand myself
+        # flatten train data
         flatten = lambda l: [item for sublist in l for item in sublist]
         flat_train_data = flatten(self.train_data)
 
@@ -194,15 +197,14 @@ smoothed_averages = []
 
 graphic_output_interval = 10
 smooth_average_count = graphic_output_interval
-pyplot.figure(0)
 
-epochs = 5
+epochs = 1000
 simultaneous_worlds = 256
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = False
 
-verbosity = 2
+verbosity = 1
 initialize_supervised = False
 supervised_rounds = 5
 
@@ -211,6 +213,7 @@ best_model = None
 
 
 if __name__ == "__main__":
+    pyplot.figure(0)
     # ai = simple_ai.SimpleAi()
     # ai = ai_module.HardcodedAi()
     # ai = convnet_ai.CenteredAI()
@@ -223,7 +226,7 @@ if __name__ == "__main__":
     # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-20 09:52:24-above-12.h5')
     ai = convnet_ai.RotatedCenteredAI(train_settings)
 
-    ai.epsilon = 0.05
+    ai.epsilon = 0.02
     min_epsilon = 0.01
     epsilon_decrement_factor = 0.99
 
@@ -307,7 +310,7 @@ if __name__ == "__main__":
         # `len(trainer.train_data)` is the amount of simulated worlds
         average = float(total_score) / len(trainer.train_data)
 
-        if verbosity >= 2 or (initialize_supervised and verbosity == 1 and epoch_id == 1):
+        if verbosity >= 1: # or (initialize_supervised and verbosity == 1 and epoch_id == 1):
             print('max:', max_score, 'average', average)
 
         averages.append(average)
