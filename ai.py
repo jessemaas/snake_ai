@@ -45,14 +45,31 @@ class BaseAi:
         self.model = None
         self.policy = self.simple_policy
 
-    def simple_policy(self, prediction):
-        max_index = 0
+    def simple_policy(self, prediction, world):
+        max_index = None
+        max_score = -10000
 
-        for i in range(1, direction_count):
-            if prediction[i] > prediction[max_index]:
-                max_index = i
+        for action_index in range(0, direction_count):
+            estimate = prediction[action_index]
 
-        return max_index
+            action = game.directions[action_index]
+                                
+            snake_head = world.snake[0]
+            above_snake_head = snake_head[0] + action[0], snake_head[1] + action[1]
+
+            estimate -= (100 if
+                above_snake_head[0] < 0 or
+                above_snake_head[0] >= world.width or
+                above_snake_head[1] < 0 or
+                above_snake_head[1] >= world.height or
+                above_snake_head in world.snake[1:-1]
+                else 0)
+
+            if estimate > max_score:
+                max_index = action_index
+                max_score = estimate
+
+        return max_index if max_index is not None else 0
 
     def predict_best_moves(self, worlds):
         if random.random() < self.epsilon:
@@ -61,7 +78,7 @@ class BaseAi:
             inputs = self.worlds_to_np_array(worlds)
             predictions = self.model.predict(inputs)
 
-            return [self.policy(prediction) for prediction in predictions]
+            return [self.policy(prediction, world) for prediction, world in zip(predictions, worlds)]
 
     def worlds_to_np_array(self, worlds):
         raise NotImplementedError

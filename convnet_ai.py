@@ -65,16 +65,16 @@ class ConvnetAi(ai.BaseAi):
         self.epsilon = 0.10
 
     def worlds_to_np_array(self, worlds):
+        food =          np.array([1, 0, 0, 0, 0])
+        snake_tail =    np.array([0, 1, 0, 0, 0])
+        snake_head =    np.array([0, 0, 1, 0, 0])
+        empty =         np.array([0, 0, 0, 1, 0])
+        outside_world = np.array([0, 0, 0, 0, 1])
+
         double_margin = self.outside_world_margin * 2
         result = np.zeros((len(worlds), game.world_width + double_margin, game.world_height + double_margin, 5), dtype=np.float)
         
         for world_index, world in enumerate(worlds):
-            food =          np.array([1, 0, 0, 0, 0])
-            snake_tail =    np.array([0, 1, 0, 0, 0])
-            snake_head =    np.array([0, 0, 1, 0, 0])
-            empty =         np.array([0, 0, 0, 1, 0])
-            outside_world = np.array([0, 0, 0, 0, 1])
-
             result[world_index, :, :] = outside_world
             result[world_index, self.outside_world_margin:-self.outside_world_margin, self.outside_world_margin:-self.outside_world_margin] = empty
 

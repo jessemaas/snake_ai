@@ -214,17 +214,14 @@ best_model = None
 
 if __name__ == "__main__":
     pyplot.figure(0)
+    os.makedirs('./graph_output/', exist_ok=True)
+    os.makedirs('./models_output/', exist_ok=True)
     # ai = simple_ai.SimpleAi()
     # ai = ai_module.HardcodedAi()
     # ai = convnet_ai.CenteredAI()
-    # ai = last_n_bodyparts_ai.LastNBodyParts(2)
-    # ai = last_n_bodyparts_ai.LastNBodyParts(3)
-    # ai = convnet_ai.RotatedCenteredAI('models_output/2020-02-26 19:07-last.h5')
-    # ai = convnet_ai.RotatedCenteredAI("models/RotatedCenteredAI_no_moving_backwards-last.h5")
-    # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 14:26:59-above-6.h5')
-    # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-18 13:45:42-above-6.h5')
-    # ai = convnet_ai.RotatedCenteredAI('models_output/centered-rotated-ai-2020-03-20 09:52:24-above-12.h5')
-    ai = convnet_ai.RotatedCenteredAI(train_settings)
+    # ai = convnet_ai.RotatedCenteredAI(train_settings)
+
+    ai = convnet_ai.ConvnetAi(train_settings)
 
     ai.epsilon = 0.02
     min_epsilon = 0.01
