@@ -39,16 +39,10 @@ def custom_loss(y_true, y_pred):
     max_diff = K.max(diff, axis=1)
     return K.square(max_diff)
 
-class BaseAi:
-    def __init__(self, train_settings):
-        self.epsilon = 0.05
-        self.model = None
-        self.policy = self.simple_policy
+def possible_action_indices(world):
+    result = []
 
-    def simple_policy(self, prediction, world):
-        possible_action_indices = []
-
-        for action_index in range(0, direction_count):
+    for action_index in range(0, direction_count):
             action = game.directions[action_index]
                                 
             snake_head = world.snake[0]
@@ -61,20 +55,30 @@ class BaseAi:
                 next_head_position[1] >= world.height or
                 next_head_position in world.snake[1:-1]
             ):
-                possible_action_indices.append(action_index)
+                result.append(action_index)
+
+    return result
 
 
+class BaseAi:
+    def __init__(self, train_settings):
+        self.epsilon = 0.05
+        self.model = None
+        self.policy = self.simple_policy
+
+    def simple_policy(self, prediction, world):
+        possible_action_ids = possible_action_indices(world)
 
         if random.random() < self.epsilon:
-            if len(possible_action_indices) > 0:
-                return possible_action_indices[random.randint(0, len(possible_action_indices) - 1)]
+            if len(possible_action_ids) > 0:
+                return possible_action_ids[random.randint(0, len(possible_action_ids) - 1)]
             else:
                 return 0
         else:
             max_index = None
             max_score = -10000
 
-            for action_index in possible_action_indices:
+            for action_index in possible_action_ids:
                 if prediction[action_index] > max_score:
                     max_index = action_index
                     max_score = prediction[action_index]
@@ -195,9 +199,15 @@ class RotatedAI(BaseAi):
         util.end_timer(start, 'predictions')
 
         def direction(world_id):
+            w = worlds[world_id] 
+
+            possible_action_ids = possible_action_indices(w)
             # with probability epsilon, return a random action
             if random.random() < self.epsilon:
-                return action_indices[world_id * 3 + random.randint(0, 2)]
+                if len(possible_action_ids) > 0:
+                    return possible_action_ids[random.randint(0, len(possible_action_ids) - 1)]
+                else:
+                    return 0
 
             max_index = -1
             max_estimate = float("-Infinity")
@@ -213,19 +223,13 @@ class RotatedAI(BaseAi):
                     estimate = prediction
 
                 if True:
-                    action = game.directions[util.get_if_cupy(action_indices[index])]
+                    action_index = action_indices[index]
+                    action = game.directions[util.get_if_cupy(action_index)]
                                         
-                    w = worlds[world_id] 
                     snake_head = w.snake[0]
                     above_snake_head = snake_head[0] + action[0], snake_head[1] + action[1]
 
-                    estimate -= (2 if
-                        above_snake_head[0] < 0 or
-                        above_snake_head[0] >= w.width or
-                        above_snake_head[1] < 0 or
-                        above_snake_head[1] >= w.height or
-                        above_snake_head in w.snake[1:-1]
-                        else 0)
+                    estimate -= (2000 if action_index not in possible_action_ids else 0)
                 elif self.dies:
                     estimate -= prediction[self.dies_index] * 0.2
                 

@@ -145,7 +145,7 @@ class Trainer:
         # counter = 0
         old_len = None
 
-        for step_nr in range(2_000):
+        for step_nr in range(5_000):
             if len(self.worlds_with_train_data) == 0:
                 break
 
@@ -220,10 +220,10 @@ if __name__ == "__main__":
     # ai = convnet_ai.CenteredAI()
     # ai = convnet_ai.RotatedCenteredAI(train_settings)
 
-    ai = convnet_ai.ConvnetAi(train_settings)
+    ai = convnet_ai.RotatedCenteredAI(train_settings)
 
-    ai.epsilon = 0.02
-    min_epsilon = 0.01
+    ai.epsilon = 0.07
+    min_epsilon = 0.03
     epsilon_decrement_factor = 0.99
 
     # learning_rate = K.get_value(ai.model.optimizer.lr)
