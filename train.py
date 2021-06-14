@@ -84,55 +84,15 @@ class Trainer:
             learn_data = ai_module.LearnData(world, move_indices[i], 0)
             train_data.append(learn_data)
 
-            if "distance_food" in train_settings:
-                distance_food_x = abs(world.food[0] - world.snake[0][0])
-                distance_food_y = abs(world.food[1] - world.snake[0][1])
-
-                distance_food = distance_food_x + distance_food_y
-                reward = 0.5 / distance_food if distance_food > 0 else 0.5
-                reward = 1.5 * (0.8 ** distance_food)
-            elif "reinforcement" in train_settings:
-                reward = 0
-            elif "teacher" in train_settings:
-                reward = 1 if teacher_move_indices[i] == move_indices[i] else 0
-                # train_data.append(ai_module.LearnData(world, move_indices[i], reward))
-                learn_data.reward = reward
-            
-            reward = 0
-
             died = False
             if result == game.MoveResult.death:
                 # stop world
                 removed_world_indices.append(i)
                 died = True
-
-                if "reinforcement" in train_settings:
-                    reward = -1
             elif result == game.MoveResult.eat:
-                if "reinforcement" in train_settings:
-                    reward = food_reward
-                for data in train_data:
-                    data.total_food += 1
-                    if "probability_of_food" in train_settings and not "teacher" in train_settings:
-                        data.reward = 1
+                learn_data.reward = 1
             learn_data.died = died
-
-            if "probability_of_food" in train_settings and not "teacher" in train_settings:
-                # train_data.append(ai_module.LearnData(world, move_indices[i], 0))
-                learn_data.reward = 0
-            elif "reinforcement" in train_settings:
-                
-                gamma = 0.9
-                reward_factor = 1
-
-                if reward != 0:
-                    for j in range(len(train_data) - 1, -1, -1):
-                        train_data[j].reward += reward * reward_factor
-                        reward_factor *= gamma
-                
-                # train_data.append(ai_module.LearnData(world, move_indices[i], reward))
-                learn_data.reward = reward
-
+            
         # remove the larger indices first
         removed_world_indices.sort(reverse=True)
 
@@ -154,6 +114,15 @@ class Trainer:
                 print('step; worlds left =', new_len)
                 old_len = new_len
             self.step()
+        
+        for data_episode in (self.train_data):
+            eat_food = False
+            for data_point in reversed(data_episode):
+                eat_food = data_point.reward > 0
+                
+                data_point.reward = 1 if eat_food else 0
+
+            
 
         print(len(self.worlds_with_train_data))
 

@@ -53,7 +53,7 @@ class ConvnetAi(ai.BaseAi):
             model.add(layers.Conv2D(6, (3, 3), activation='relu'))
             model.add(layers.Conv2D(4, (3, 3), activation='relu'))
             model.add(layers.Flatten())
-            model.add(layers.Dense(ai.direction_count, activation='relu'))
+            model.add(layers.Dense(ai.direction_count, activation='sigmoid'))
 
             self.model = model
             optimizer = keras.optimizers.SGD()
