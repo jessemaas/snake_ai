@@ -46,39 +46,46 @@ class BaseAi:
         self.policy = self.simple_policy
 
     def simple_policy(self, prediction, world):
-        max_index = None
-        max_score = -10000
+        possible_action_indices = []
 
         for action_index in range(0, direction_count):
-            estimate = prediction[action_index]
-
             action = game.directions[action_index]
                                 
             snake_head = world.snake[0]
-            above_snake_head = snake_head[0] + action[0], snake_head[1] + action[1]
+            next_head_position = snake_head[0] + action[0], snake_head[1] + action[1]
+            
+            if not (
+                next_head_position[0] < 0 or
+                next_head_position[0] >= world.width or
+                next_head_position[1] < 0 or
+                next_head_position[1] >= world.height or
+                next_head_position in world.snake[1:-1]
+            ):
+                possible_action_indices.append(action_index)
 
-            estimate -= (100 if
-                above_snake_head[0] < 0 or
-                above_snake_head[0] >= world.width or
-                above_snake_head[1] < 0 or
-                above_snake_head[1] >= world.height or
-                above_snake_head in world.snake[1:-1]
-                else 0)
 
-            if estimate > max_score:
-                max_index = action_index
-                max_score = estimate
 
-        return max_index if max_index is not None else 0
+        if random.random() < self.epsilon:
+            if len(possible_action_indices) > 0:
+                return possible_action_indices[random.randint(0, len(possible_action_indices) - 1)]
+            else:
+                return 0
+        else:
+            max_index = None
+            max_score = -10000
+
+            for action_index in possible_action_indices:
+                if prediction[action_index] > max_score:
+                    max_index = action_index
+                    max_score = prediction[action_index]
+
+            return max_index if max_index is not None else 0
 
     def predict_best_moves(self, worlds):
-        if random.random() < self.epsilon:
-            return [random.randint(0, direction_count - 1) for world in worlds]
-        else:
-            inputs = self.worlds_to_np_array(worlds)
-            predictions = self.model.predict(inputs)
+        inputs = self.worlds_to_np_array(worlds)
+        predictions = self.model.predict(inputs)
 
-            return [self.policy(prediction, world) for prediction, world in zip(predictions, worlds)]
+        return [self.policy(prediction, world) for prediction, world in zip(predictions, worlds)]
 
     def worlds_to_np_array(self, worlds):
         raise NotImplementedError
