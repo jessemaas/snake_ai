@@ -24,6 +24,7 @@ class LearnData:
         self.height = world.height
         self.snake = world.snake[:]
         self.food = world.food
+        self.eat_food = False
         self.action_index = action_index
         self.reward = reward
         self.total_food = 0

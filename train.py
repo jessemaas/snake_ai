@@ -27,6 +27,8 @@ import random
 import datetime
 import os
 
+from time import perf_counter
+
 food_reward = 1
 
 train_settings = [
@@ -61,18 +63,17 @@ class Trainer:
         performs one simulation step and does necessary work for training
         """
 
-        if "teacher" in train_settings:
-            teacher_ai = ai_module.HardcodedAi(train_settings)
-            teacher_move_indices = teacher_ai.predict_best_moves(
-                [world for world, train_data in self.worlds_with_train_data]
-            )
-
         # predict moves
         util.times_predicted += 1
+
+        predict_timer = util.start_timer()
         util.predicted_actions += len(self.worlds_with_train_data)
-        move_indices = self.ai.predict_best_moves(
-            [world for world, train_data in self.worlds_with_train_data]
-        )
+        util.end_timer(predict_timer, 'predict')
+
+        worlds_only = [world for world, train_data in self.worlds_with_train_data]
+
+
+        move_indices = self.ai.predict_best_moves(worlds_only)
 
         removed_world_indices = []
 
@@ -90,7 +91,7 @@ class Trainer:
                 removed_world_indices.append(i)
                 died = True
             elif result == game.MoveResult.eat:
-                learn_data.reward = 1
+                learn_data.eat_food = True
             learn_data.died = died
             
         # remove the larger indices first
@@ -116,11 +117,13 @@ class Trainer:
             self.step()
         
         for data_episode in (self.train_data):
-            eat_food = False
+            total_food = 0
             for data_point in reversed(data_episode):
-                eat_food = data_point.reward > 0
+                if data_point.eat_food:
+                    total_food += 1
                 
-                data_point.reward = 1 if eat_food else 0
+                data_point.reward = 1 if total_food > 0 else 0
+                data_point.total_food = total_food
 
             
 
@@ -141,8 +144,8 @@ class Trainer:
         max_score = 0
         total_score = 0
 
-        for datas in self.train_data:
-            food_amount = datas[0].total_food
+        for data_episode in self.train_data:
+            food_amount = data_episode[0].total_food
 
             if max_score < food_amount:
                 max_score = food_amount
@@ -238,6 +241,7 @@ if __name__ == "__main__":
             renderer.render_loop()
 
     for epoch_id in range(1, epochs + 1):
+        start_epoch = util.start_timer()
 
         # ai.epsilon *= epsilon_decrement_factor
         # print("start epoch")
@@ -334,7 +338,9 @@ if __name__ == "__main__":
             for _ in range(simulated_games_count):
                 renderer = render.Renderer(ai)
                 renderer.render_loop()
+        util.end_timer(start_epoch, 'epoch')
 
+        util.print_timers()
 
     ai.save(training_start, '', '-last')
     ai.model = best_model
