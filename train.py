@@ -66,14 +66,13 @@ class Trainer:
         # predict moves
         util.times_predicted += 1
 
-        predict_timer = util.start_timer()
         util.predicted_actions += len(self.worlds_with_train_data)
-        util.end_timer(predict_timer, 'predict')
 
         worlds_only = [world for world, train_data in self.worlds_with_train_data]
 
-
+        predict_timer = util.start_timer()
         move_indices = self.ai.predict_best_moves(worlds_only)
+        util.end_timer(predict_timer, 'predict_best_moves')
 
         removed_world_indices = []
 
@@ -192,7 +191,7 @@ if __name__ == "__main__":
     # ai = convnet_ai.CenteredAI()
     # ai = convnet_ai.RotatedCenteredAI(train_settings)
 
-    ai = convnet_ai.RotatedCenteredAI(train_settings)
+    ai = convnet_ai.ConvnetAi(train_settings)
 
     ai.epsilon = 0.07
     min_epsilon = 0.03
