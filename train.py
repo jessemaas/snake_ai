@@ -144,20 +144,19 @@ class Trainer:
     def simulate_entire_game(self):
         # counter = 0
         old_len = None
-        while(len(self.worlds_with_train_data) > 0):
-            # counter += 1
 
-            # if counter > 200:
-            #     for world, _ in self.worlds_with_train_data:
-            #         renderer = render.Renderer(self.ai)
-            #         renderer.world = world
-            #         renderer.render_loop()
-            #     return
+        for step_nr in range(2_000):
+            if len(self.worlds_with_train_data) == 0:
+                break
+
             new_len = len(self.worlds_with_train_data)
             if verbosity >= 2 and old_len != new_len:
                 print('step; worlds left =', new_len)
                 old_len = new_len
             self.step()
+
+        print(len(self.worlds_with_train_data))
+
         
         if verbosity >= 2:
             print('max steps:', max((len(data) for data in self.train_data)))
