@@ -198,7 +198,7 @@ if __name__ == "__main__":
     epsilon_decrement_factor = 0.99
 
     # learning_rate = K.get_value(ai.model.optimizer.lr)
-    learning_rate = 0.00001
+    learning_rate = 0.000001
     min_learning_rate = learning_rate * 0.1
     #learning_rate = min_learning_rate
     learning_rate_decrement_factor = 0.99
