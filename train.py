@@ -43,6 +43,12 @@ train_settings = [
 
 ai_module.train_settings = train_settings
 
+config = {
+    "predict_one_food": True,
+    "predict_reduced_reward": True,
+    "reward_decrement_factor": 0.96,
+}
+
 
 if False:
     # use cpu
@@ -105,7 +111,7 @@ class Trainer:
         # counter = 0
         old_len = None
 
-        for step_nr in range(5_000):
+        for step_nr in range(max_episodes):
             if len(self.worlds_with_train_data) == 0:
                 break
 
@@ -114,17 +120,22 @@ class Trainer:
                 print('step; worlds left =', new_len)
                 old_len = new_len
             self.step()
+
+        reward_decrement_factor = ai.config['reward_decrement_factor']
         
         for data_episode in (self.train_data):
             total_food = 0
+            reward = 0
             for data_point in reversed(data_episode):
                 if data_point.eat_food:
                     total_food += 1
+                    reward += 1
                 
-                data_point.reward = 1 if total_food > 0 else 0
+                data_point.food_from_now_on = 1 if total_food > 0 else 0
                 data_point.total_food = total_food
+                data_point.reward = reward
 
-            
+                reward *= reward_decrement_factor
 
         print(len(self.worlds_with_train_data))
 
@@ -169,7 +180,8 @@ graphic_output_interval = 10
 smooth_average_count = graphic_output_interval
 
 epochs = 1000
-simultaneous_worlds = 256
+max_episodes = 5_000
+simultaneous_worlds = 128
 simulated_games_count = 0
 
 switch_teacher_to_reinforcement = False
@@ -191,14 +203,14 @@ if __name__ == "__main__":
     # ai = convnet_ai.CenteredAI()
     # ai = convnet_ai.RotatedCenteredAI(train_settings)
 
-    ai = convnet_ai.ConvnetAi(train_settings)
+    ai = convnet_ai.ConvnetAi(train_settings, config)
 
     ai.epsilon = 0.07
     min_epsilon = 0.03
     epsilon_decrement_factor = 0.99
 
     # learning_rate = K.get_value(ai.model.optimizer.lr)
-    learning_rate = 0.000001
+    learning_rate = 0.000003
     min_learning_rate = learning_rate * 0.1
     #learning_rate = min_learning_rate
     learning_rate_decrement_factor = 0.99
@@ -318,21 +330,27 @@ if __name__ == "__main__":
                 ai.save(training_start, '', '-above-' + str(done_output))
                 done_output += 1
 
-            if switch_teacher_to_reinforcement and smoothed_averages[-1] > 0.6 and "teacher" in train_settings:
-                train_settings.remove("teacher")
-                train_settings.append(["reinforcement"])
-                if verbosity >= 1:
-                    print() 
-                    print("switching to reinforcement")
-                    print()
-
-            # new_graph_name = 'graph_output/graph-' + training_start + '-' + str(epoch_id).rjust(5, '0')
             new_graph_name = 'graph_output/graph-' + training_start
             pyplot.savefig(new_graph_name, dpi=300)
+            pyplot.clf()
 
-            # if last_graph_name != None:
-            #     os.remove(last_graph_name + '.png')
-            # last_graph_name = new_graph_name
+            # Plot the loss
+            smoothed_losses = []
+            for end in range(len(losses)):
+                start = max(0, end - 10)
+                total_loss = 0
+                for loss_index in range(start, end + 1):
+                    total_loss += losses[loss_index][0]
+                avg_loss = total_loss / (end - start + 1)
+
+                smoothed_losses.append(avg_loss)
+
+            loss_graph_name = 'graph_output/loss-graph-' + training_start
+            pyplot.plot(losses)
+            pyplot.plot(smoothed_losses)
+            pyplot.savefig(loss_graph_name)
+            pyplot.clf()
+
         
             for _ in range(simulated_games_count):
                 renderer = render.Renderer(ai)

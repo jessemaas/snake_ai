@@ -24,6 +24,7 @@ class LearnData:
         self.height = world.height
         self.snake = world.snake[:]
         self.food = world.food
+        self.food_from_now_on = False
         self.eat_food = False
         self.action_index = action_index
         self.reward = reward
@@ -62,10 +63,11 @@ def possible_action_indices(world):
 
 
 class BaseAi:
-    def __init__(self, train_settings):
+    def __init__(self, train_settings, config: dict):
         self.epsilon = 0.05
         self.model = None
         self.policy = self.simple_policy
+        self.config = config
 
     def simple_policy(self, prediction, world):
         possible_action_ids = possible_action_indices(world)
@@ -157,8 +159,8 @@ class HardcodedAi(BaseAi):
         pass
 
 class RotatedAI(BaseAi):  
-    def __init__(self, train_settings):
-        super().__init__(train_settings)
+    def __init__(self, train_settings, config):
+        super().__init__(train_settings, config)
         self.num_output = 0
 
         index = 0

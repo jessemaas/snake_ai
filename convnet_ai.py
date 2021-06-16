@@ -39,8 +39,8 @@ if gpus:
 tile_classes = 4
 
 class ConvnetAi(ai.BaseAi):
-    def __init__(self, train_settings, save_file=None):
-        super().__init__(train_settings)
+    def __init__(self, train_settings, config, save_file=None):
+        super().__init__(train_settings, config)
 
         self.outside_world_margin = 1
         
@@ -51,7 +51,7 @@ class ConvnetAi(ai.BaseAi):
             model.add(layers.Conv2D(8, (3, 3), activation='relu', input_shape=(game.world_width + double_margin, game.world_height + double_margin, 5)))
             model.add(layers.Conv2D(6, (5, 5), activation='relu'))
             model.add(layers.Flatten())
-            model.add(layers.Dense(ai.direction_count, activation='sigmoid'))
+            model.add(layers.Dense(ai.direction_count, activation='relu'))
 
             self.model = model
             optimizer = keras.optimizers.SGD()
@@ -95,8 +95,8 @@ class CenteredAI(ai.BaseAi):
     """
     This AI is a convolutional neural network. It has as input a map of the world, centered around the head of the snake.
     """
-    def __init__(self, train_settings, save_file=None):
-        super().__init__(train_settings)
+    def __init__(self, train_settings, config, save_file=None):
+        super().__init__(train_settings, config)
 
         self.tile_classes = 5
 
@@ -179,8 +179,8 @@ class CenteredAI(ai.BaseAi):
         
 
 class RotatedCenteredAI(ai.RotatedAI):
-    def __init__(self, train_settings, save_file=None):
-        super().__init__(train_settings)
+    def __init__(self, train_settings, config, save_file=None):
+        super().__init__(train_settings, config)
 
         self.tile_classes = 5
         self.epsilon = 0.01
