@@ -80,7 +80,7 @@ class BaseAi:
             max_index = None
             max_score = -10000
 
-            for action_index in ((x, y) for x, y in game.directions if world.snake[1] != (world.snake_head[0] + x, world.snake_head[1] + y)):
+            for action_index in ((x, y) for x, y in game.directions if world.snake[1] != (world.snake[0][0] + x, world.snake[0][1] + y)):
                 if prediction[action_index] > max_score:
                     max_index = action_index
                     max_score = prediction[action_index]
