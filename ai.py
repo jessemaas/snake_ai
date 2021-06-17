@@ -70,9 +70,8 @@ class BaseAi:
         self.config = config
 
     def simple_policy(self, prediction, world):
-        possible_action_ids = possible_action_indices(world)
-
         if random.random() < self.epsilon:
+            possible_action_ids = possible_action_indices(world)
             if len(possible_action_ids) > 0:
                 return possible_action_ids[random.randint(0, len(possible_action_ids) - 1)]
             else:
@@ -81,7 +80,7 @@ class BaseAi:
             max_index = None
             max_score = -10000
 
-            for action_index in possible_action_ids:
+            for action_index in ((x, y) for x, y in game.directions if world.snake[1] != (world.snake_head[0] + x, world.snake_head[1] + y)):
                 if prediction[action_index] > max_score:
                     max_index = action_index
                     max_score = prediction[action_index]
@@ -90,7 +89,11 @@ class BaseAi:
 
     def predict_best_moves(self, worlds):
         inputs = self.worlds_to_np_array(worlds)
+
+        predict_start = util.start_timer()
         predictions = self.model.predict(inputs)
+        util.end_timer(predict_start, 'self.model.predict')
+
 
         return [self.policy(prediction, world) for prediction, world in zip(predictions, worlds)]
 
